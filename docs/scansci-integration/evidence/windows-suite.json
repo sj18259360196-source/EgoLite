@@ -2,7 +2,7 @@
   "passed": true,
   "executable": "A:\\Project\\egolite\\release\\public-source\\release\\win-unpacked\\EgoLite.exe",
   "developerToolsOnPath": false,
-  "checkedAt": "2026-10-24T15:58:11.323Z",
+  "checkedAt": "2026-10-24T16:13:41.868Z",
   "checks": {
     "desktop": true,
     "broker": true,
@@ -19,6 +19,7 @@
     "scanSciAuthenticatedBrowserPdf": true,
     "codexNativeRuntime": true,
     "scanSciMcpTools": 20,
+    "scanSciMcpCall": true,
     "torBinary": true,
     "selfContainedNativeHost": true,
     "scanSciCrashRecovery": true,

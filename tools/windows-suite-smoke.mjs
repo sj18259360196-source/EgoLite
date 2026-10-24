@@ -145,6 +145,11 @@ try {
   await scanClient.connect(new StdioClientTransport({ command: python, args: ["-m", "scansci_pdf.main", "run"], env: pyEnv, cwd: work, stderr: "pipe" }));
   checks.scanSciMcpTools = (await scanClient.listTools()).tools.length;
   assert.ok(checks.scanSciMcpTools > 0);
+  const scanConfig = await scanClient.callTool({ name: "scansci_pdf_config", arguments: { key: "browser_backend" } });
+  assert.ok(!scanConfig.isError, "ScanSci MCP configuration call failed");
+  const scanConfigText = scanConfig.content.filter(item => item.type === "text").map(item => item.text).join("\n");
+  assert.equal(JSON.parse(scanConfigText).value, "egolite");
+  checks.scanSciMcpCall = true;
   const tor = await run(join(runtime, "scansci", "tor", "tor", "tor.exe"), ["--version"], { env, windowsHide: true, timeout: 10000 });
   assert.match(tor.stdout, /Tor version/);
   checks.torBinary = true;
