@@ -338,7 +338,8 @@ const agentIntegrations = new AgentIntegrationService({
   version: app.getVersion(),
 });
 const scanSciService = new ScanSciService({
-  projectDirectory: process.env.SCANSCI_PROJECT_DIR || (app.isPackaged ? join(agentRuntimeDirectory, "scansci") : join(developmentRoot, "..", "ScanSci PDF")),
+  projectDirectory: process.env.SCANSCI_PROJECT_DIR || (app.isPackaged ? join(agentRuntimeDirectory, "scansci") : join(developmentRoot, "integrations", "scansci", "runtime")),
+  ...(!app.isPackaged && !process.env.SCANSCI_PROJECT_DIR ? { pythonCommand: join(developmentRoot, "integrations", "scansci", ".venv", "Scripts", "python.exe"), dataDirectory: join(dirname(desktopStatePath), "scansci"), pipeName } : {}),
   ...(app.isPackaged ? { pythonCommand: join(agentRuntimeDirectory, "scansci", "python", "python.exe"), runtimeDirectory: agentRuntimeDirectory, dataDirectory: join(dirname(desktopStatePath), "scansci"), pipeName, autoRestart: true } : {}),
 });
 
@@ -646,15 +647,22 @@ function createWindow() {
       } while (Date.now() < deadline);
       await delay(6_000);
       if (process.env.EGO_DESKTOP_CAPTURE_SCANSCI_RESULT) {
+        const guestId = await mainWindow.webContents.executeJavaScript(`document.querySelector("#scansci-settings-webview")?.getWebContentsId()`);
+        const guest = webContents.fromId(guestId);
+        const page = guest ? await guest.executeJavaScript(`({ title: document.title, bodyLength: document.body.innerText.length, fields: document.querySelectorAll("[data-setting]").length })`) : null;
+        if (guest && process.env.EGO_DESKTOP_CAPTURE_SCANSCI_PAGE) {
+          writeFileSync(process.env.EGO_DESKTOP_CAPTURE_SCANSCI_PAGE, (await guest.capturePage(undefined, { stayAwake: true })).toPNG());
+        }
         writeFileSync(process.env.EGO_DESKTOP_CAPTURE_SCANSCI_RESULT, JSON.stringify({
           renderer: rendererState,
           service: await scanSciService.status(),
+          page,
         }, null, 2), "utf8");
       }
     }
     if (process.env.EGO_DESKTOP_CAPTURE) {
       await delay(2500);
-      const image = await mainWindow.webContents.capturePage();
+      const image = await mainWindow.webContents.capturePage(undefined, { stayAwake: true });
       writeFileSync(process.env.EGO_DESKTOP_CAPTURE, image.toPNG());
     }
   });

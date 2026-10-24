@@ -10,8 +10,10 @@ separately by the adapter builder, with its original notices retained in the
 generated component. That upstream project has its own licensing terms.
 
 Other npm dependencies retain their respective licenses and notices. Versions are
-recorded in `package-lock.json`. ScanSci PDF is a separate packaging dependency
-and retains its own license.
+recorded in `package-lock.json`. ScanSci PDF 1.19.0 is vendored under its original
+MIT license at `vendor/scansci-pdf/LICENSE`; its upstream source pin is recorded in
+`integrations/scansci/upstream.json`. The bundled ScanSci Find source retains its
+upstream MIT declaration and the existing Ego bridge adaptations.
 
 No blanket license is assigned to the original EgoLite code by this publication.
 Public visibility alone does not grant an open-source license. Third-party

@@ -1,0 +1,63 @@
+{
+  "passed": false,
+  "checkedAt": "2026-10-24T14:19:59.112Z",
+  "checks": {
+    "foreignPortPreserved": true,
+    "realOwnedProcess": true,
+    "settingsAndAuthorization": true,
+    "realSettingsSave": true,
+    "restartPreservesData": true,
+    "liveSearch": [
+      {
+        "title": "Is Attention All You Need?",
+        "doi": "10.1007/978-3-031-84300-6_13",
+        "url": "https://doi.org/10.1007/978-3-031-84300-6_13",
+        "authors": [
+          "Patrick Mineault"
+        ],
+        "year": 2025,
+        "cited_by_count": 55,
+        "abstract": "",
+        "is_oa": false,
+        "oa_url": ""
+      },
+      {
+        "title": "Attention Is All You Need: An Analysis Of The Valuation Of Artificial Intelligence Tokens",
+        "doi": "10.2139/ssrn.4993784",
+        "url": "https://doi.org/10.2139/ssrn.4993784",
+        "authors": [
+          "Mfon Akpan"
+        ],
+        "year": "",
+        "cited_by_count": 0,
+        "abstract": "This study discusses the parameters that define the value of artificial intelligence (AI) tokens based on user interaction, their pricing mechanism, and their correlation with the predicted value thus evaluating AI token valuation based on user engagement, pricing, and website visits. This study tests hypotheses that examine the factors that influence the value of AI tokens. Using data from ten AI tokens, the study employs correlation and regression analyses to examine these relationship",
+        "is_oa": false,
+        "oa_url": ""
+      },
+      {
+        "title": "Attention is All You Need... Unless You Are a CISO: The Inherent Incompatibility Between Transformer Architectures and Zero-Trust Environments",
+        "doi": "10.2139/ssrn.5967774",
+        "url": "https://doi.org/10.2139/ssrn.5967774",
+        "authors": [
+          "Giuseppe Canale"
+        ],
+        "year": "",
+        "cited_by_count": 0,
+        "abstract": "",
+        "is_oa": false,
+        "oa_url": ""
+      }
+    ]
+  },
+  "error": "TimeoutError: The operation was aborted due to timeout",
+  "logs": [
+    "warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.",
+    "[INFO] ScanSci PDF - 1706.03762",
+    "[10/24/26 22:16:59]",
+    "INFO     ScanSci PDF - 1706.03762          __init__.py:1018",
+    "[INFO]    [L0] arXiv direct",
+    "INFO        [",
+    "L0] arXiv direct",
+    "__init__.py:1021"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-24T16:07:00.880Z",
+  "installer": "A:\\Project\\egolite\\release\\public-source\\release\\EgoLite-Setup-0.2.13-x64.exe",
+  "installerSha256": "86753fbae0681f48f673371c62e266e3b4d0c672d790d063d13ac69f377c1b2b",
+  "testedArchive": "A:\\Project\\egolite\\release\\public-source\\release\\win-unpacked\\resources\\app.asar",
+  "appAsarSha256": "b9ce3604192085eed4cdbc7b2e8ba57a021d0b895205ef490c7ecd1fa3ede018",
+  "dependencyAudit": true,
+  "componentFiles": {
+    "components/cos/manifest.json": "994b4a21958cf383061600d76f9b21c435ef2c2c1e8f0444992ebae2a8ad472d",
+    "components/cos/source/out/main/index.js": "8969856b7f6ce992be1e6d97fc480e09ee79df731cf8621f4c31b41826dc5be4"
+  },
+  "scanSci": {
+    "files": 8190,
+    "sha256": "954c57fcc96abcb1bdc73478d6dd36ee6060ad3697c8fa383215a0c2f9b826fd",
+    "bundle": {
+      "repository": "https://github.com/Rimagination/scansci-pdf",
+      "tag": "v1.19.0",
+      "version": "1.19.0",
+      "commit": "75efc280a2bf12d2d3c908858de4efb330a124c0",
+      "archiveSha256": "4cb9f78e382e20025515a18009fd44570db919a3bee8bfbe67c4f91ceefecf95",
+      "adapterVersion": 1,
+      "lockSha256": "601f729d3243d4532f72f4615c54d7f3c55ef6c626cf62bb41565c762375eeda",
+      "python": "cpython-3.14-windows-x86_64-none",
+      "builtAt": "2026-10-24T15:55:24.887Z"
+    }
+  },
+  "installed": false
+}

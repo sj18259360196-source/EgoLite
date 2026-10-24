@@ -1,7 +1,7 @@
 # EgoLite
 
 Windows desktop browser with task workspaces, MCP automation, and an integrated
-Chat On Steroids (CoS) workspace. The current desktop version is `0.2.12-cos.11`.
+Chat On Steroids (CoS) workspace. The development desktop version is `0.2.13`.
 
 ## Development
 
@@ -29,10 +29,20 @@ and generated component files are not committed here.
 ## Packaging
 
 `npm run package:win` prepares the Windows runtime and creates the installer.
-Prepare CoS as described above first. The packaging pipeline also requires a
-separate ScanSci PDF source checkout, its Windows Python environment, `uv`, and
-the Tor runtime. Set `SCANSCI_PACKAGE_SOURCE` and `SCANSCI_PACKAGE_TOR` to those
-locations. This repository alone does not contain those external dependencies.
+Prepare CoS as described above first. ScanSci PDF `1.19.0` source is vendored and
+Ego adapters remain separate. Prepare its Python environment with `uv`:
+
+```powershell
+uv venv integrations/scansci/.venv --python 3.14
+uv pip sync integrations/scansci/requirements.lock --python integrations/scansci/.venv/Scripts/python.exe
+node tools/prepare-scansci-source.mjs
+```
+
+The packaging pipeline copies the real Python interpreter and installs only the
+hash-locked dependencies. Set `SCANSCI_PACKAGE_TOR` to a prepared Tor distribution
+containing `tor/` and `docs/`. Neither Python binaries nor Tor binaries are
+committed to this source repository. Existing user configuration is kept outside
+the installed program. See [ScanSci integration](docs/scansci-integration/STATUS.md).
 
 ## CoS Integration
 
@@ -53,10 +63,12 @@ remain unverified.
 
 ## Publication Scope
 
-This is a source snapshot from local integration commit
+The initial public snapshot was based on local integration commit
 `56b2fca4ceb3f952e2cbaca33a56c9b03c3e2ae3`.
 Private development history, user profiles, credentials, local agent settings,
-internal work logs, screenshots, generated packages, and test outputs are excluded.
+private internal work logs, generated packages, and user test output are excluded.
+Sanitized ScanSci validation records and isolated-profile screenshots are included
+under `docs/scansci-integration/evidence`.
 Unmerged changes from the separate development checkout are not included.
 
 See [automation API](docs/automation-api.md) and

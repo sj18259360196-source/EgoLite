@@ -3,6 +3,7 @@ import { spawn, execFile } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile, copyFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { createServer, connect } from "node:net";
+import { createServer as createHttpServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -113,6 +114,29 @@ try {
   const probe = await run(python, ["-c", "from scansci_pdf.discovery import find_cli_available; from scansci_pdf.egolite_bridge import _native_install; import fitz, openpyxl; assert find_cli_available(); assert _native_install(); print('OK')"], { env: pyEnv, cwd: work, windowsHide: true, timeout: 20000 });
   assert.match(probe.stdout, /OK/);
   checks.pythonDiscoveryPdfBridge = true;
+  await run(python, ["-c", "import pymupdf,sys; d=pymupdf.open(); p=d.new_page(); p.insert_text((40,40),'ScanSci Ego authenticated PDF fixture'); d.save(sys.argv[1]); d.close()", join(work, "fixture.pdf")], { env: pyEnv, windowsHide: true });
+  const fixturePdf = await readFile(join(work, "fixture.pdf"));
+  const fixture = createHttpServer((request, response) => {
+    if (request.url === "/protected.pdf") {
+      if (!String(request.headers.cookie || "").includes("scansci_fixture=fixture")) { response.writeHead(403); response.end("Missing fixture session"); return; }
+      response.writeHead(200, { "content-type": "application/pdf" }); response.end(fixturePdf); return;
+    }
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end('<title>ScanSci fixture</title><input id="q"><button id="go" onclick="document.title=document.querySelector(\'#q\').value">Apply</button><script>document.cookie="scansci_fixture=fixture; path=/"</script>');
+  });
+  await new Promise(resolveListen => fixture.listen(0, "127.0.0.1", resolveListen));
+  try {
+    const fixtureUrl = `http://127.0.0.1:${fixture.address().port}`;
+    const script = `import json,sys\nfrom pathlib import Path\nfrom scansci_pdf import egolite_bridge as b\ncfg={'egolite_auto_start':False,'egolite_task_space':'ScanSci bridge verification','cache_dir':sys.argv[3]}\nb.navigate(sys.argv[1],cfg)\nassert b.evaluate('(value)=>{document.querySelector("#q").value=value;document.querySelector("#go").click();return document.title}', 'Ego bridge works',cfg)=='Ego bridge works'\nassert b.import_cookies([{'name':'scansci_extra','value':'fixture','domain':'127.0.0.1','path':'/'}],cfg)>0\nassert any(c['name']=='scansci_fixture' for c in b.export_cookies(cfg))\nassert b.download_pdf(sys.argv[1]+'/protected.pdf',Path(sys.argv[2]),cfg,timeout=45)\nprint('BRIDGE_OK')`;
+    const bridgeProbe = await run(python, ["-c", script, fixtureUrl, join(work, "browser.pdf"), join(work, "bridge-cache")], { env: pyEnv, cwd: work, windowsHide: true, timeout: 90000 });
+    assert.match(bridgeProbe.stdout, /BRIDGE_OK/);
+    assert.deepEqual(await readFile(join(work, "browser.pdf")), fixturePdf);
+    checks.scanSciRealBrowserBridge = true;
+    checks.scanSciCookieReadWrite = true;
+    checks.scanSciAuthenticatedBrowserPdf = true;
+  } finally {
+    await new Promise(resolveClose => fixture.close(resolveClose));
+  }
   const sdkProbe = await run(executable, ["--input-type=module", "-e", "import { Codex } from '@openai/codex-sdk'; import { fileURLToPath } from 'node:url'; import path from 'node:path'; if (!fileURLToPath(import.meta.resolve('@openai/codex-sdk')).startsWith(path.join(process.cwd(), 'node_modules'))) throw Error('SDK escaped bundle'); new Codex(); console.log('OK')"], { cwd: runtime, env: { ...env, ELECTRON_RUN_AS_NODE: "1" }, windowsHide: true, timeout: 10000 });
   assert.match(sdkProbe.stdout, /OK/);
   checks.codexNativeRuntime = true;
@@ -134,7 +158,7 @@ try {
 
   const processes = await run(join(process.env.SystemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"), ["-NoProfile", "-Command", `Get-CimInstance Win32_Process -Filter "ParentProcessId = ${app.pid}" | Select-Object ProcessId,Name,CommandLine | ConvertTo-Json -Compress`], { windowsHide: true });
   const children = [].concat(JSON.parse(processes.stdout));
-  const service = children.find(p => p.Name === "python.exe" && p.CommandLine.includes("scansci_pdf.main"));
+  const service = children.find(p => p.Name === "python.exe" && /scansci_pdf\.(main|ego_host)/.test(p.CommandLine));
   assert.ok(service, "ScanSci must be a bundled child process");
   await run("taskkill.exe", ["/PID", String(service.ProcessId), "/F", "/T"], { windowsHide: true });
   await new Promise(resolve => setTimeout(resolve, 1500));

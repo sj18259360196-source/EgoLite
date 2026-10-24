@@ -1,0 +1,10 @@
+# Compiled Cython extensions (build artifacts)
+*.pyd
+*.so
+*.pyd.*
+*.so.*
+
+# Cython generated C files
+*.c
+
+# The .pyx sources are part of the MIT-licensed source tree and are tracked.

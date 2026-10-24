@@ -181,6 +181,74 @@ function jsonResponse(value, status = 200) {
   });
 }
 
+test("hosted ScanSci rejects a foreign endpoint and never adopts its process", async () => {
+  const service = new ScanSciService({
+    hosted: true, fileExists: () => true,
+    fetch: async () => jsonResponse({ status: "ok", service: "scansci-pdf", protocol: "ego-scansci-v1", instance: "foreign" }),
+    findListeningPid: () => { throw new Error("Must not inspect foreign process"); },
+    terminatePid: () => { throw new Error("Must not kill foreign process"); },
+  });
+  assert.equal((await service.status()).online, false);
+  service.dispose();
+});
+
+test("a stopped hosted startup cannot spawn after its port probe resolves", async () => {
+  let release;
+  let spawns = 0;
+  const service = new ScanSciService({
+    hosted: true, fileExists: () => true, pythonCommand: "python.exe",
+    fetch: async () => { throw new Error("offline"); },
+    reservePort: () => new Promise(resolve => { release = resolve; }),
+    spawnProcess: () => { spawns++; return fakeChild(); },
+  });
+  const starting = service.ensure();
+  while (!release) await new Promise(resolve => setTimeout(resolve, 1));
+  await service.stop();
+  release(8765);
+  await assert.rejects(starting, /stopped/);
+  assert.equal(spawns, 0);
+});
+
+test("channel reports cannot pass when the endpoint returns a failure payload", async () => {
+  const service = new ScanSciService({
+    hosted: false,
+    fileExists: () => true,
+    fetch: async url => String(url).endsWith("/api/channel/action")
+      ? jsonResponse({ success: false, error: "fixture failure" }) : jsonResponse({ status: "ok" }),
+  });
+  const report = await service.checkAll();
+  assert.equal(report.passed, 0);
+  assert.equal(report.failed.length, 8);
+});
+
+test("re-enabling cannot revive an earlier cancelled hosted startup", async () => {
+  const probes = [];
+  let online = false;
+  let starts = 0;
+  let service;
+  service = new ScanSciService({
+    hosted: true, fileExists: () => true, pythonCommand: "python.exe",
+    reservePort: () => new Promise(resolve => probes.push(resolve)),
+    fetch: async () => {
+      if (!online) throw new Error("offline");
+      return jsonResponse({ service: "scansci-pdf", protocol: "ego-scansci-v1", instance: service.instanceId });
+    },
+    spawnProcess: () => { starts++; online = true; return fakeChild(); },
+  });
+  const first = service.ensure();
+  const rejected = assert.rejects(first, /stopped/);
+  while (!probes.length) await new Promise(resolve => setTimeout(resolve, 1));
+  await service.stop();
+  const second = service.ensure();
+  while (probes.length < 2) await new Promise(resolve => setTimeout(resolve, 1));
+  probes[0](8765);
+  await rejected;
+  probes[1](8766);
+  assert.equal((await second).online, true);
+  assert.equal(starts, 1);
+  service.dispose();
+});
+
 function fakeChild(args = [], options = {}) {
   const child = new EventEmitter();
   child.pid = 32109;

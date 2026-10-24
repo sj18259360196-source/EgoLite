@@ -1,4 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { createServer } from "node:net";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { delimiter, dirname, join, resolve } from "node:path";
 
@@ -18,6 +20,7 @@ export class ScanSciService {
     this.restartAttempts = 0;
     this.restartTimer = null;
     this.stopping = false;
+    this.lifecycle = 0;
     this.port = Number(options.port || process.env.SCANSCI_PORT || DEFAULT_PORT);
     this.fetch = options.fetch || globalThis.fetch;
     this.spawnProcess = options.spawnProcess || spawn;
@@ -25,6 +28,10 @@ export class ScanSciService {
     this.findListeningPid = options.findListeningPid || (() => findListeningPid(this.port, this.probeCommand));
     this.terminatePid = options.terminatePid || ((pid) => terminatePid(pid, this.probeCommand));
     this.fileExists = options.fileExists || existsSync;
+    this.hosted = options.hosted ?? this.fileExists(join(this.projectDirectory, "src", "scansci_pdf", "ego_host.py"));
+    this.token = randomUUID();
+    this.instanceId = randomUUID();
+    this.reservePort = options.reservePort || availablePort;
     this.clock = options.clock || (() => new Date());
     this.startTimeoutMs = Number(options.startTimeoutMs || 30_000);
     this.requestTimeoutMs = Number(options.requestTimeoutMs || 45_000);
@@ -66,18 +73,22 @@ export class ScanSciService {
   }
 
   async ensure() {
+    const generation = this.lifecycle;
     this.stopping = false;
     const existing = await this.status();
+    if (generation !== this.lifecycle || this.stopping) throw new Error("ScanSci startup was stopped");
     if (existing.online) {
       this.adopt(existing.identity);
       return this.status();
     }
-    if (this.startPromise) return this.startPromise;
-    this.startPromise = this.start().finally(() => { this.startPromise = null; });
-    return this.startPromise;
+    if (this.startPromise && this.startGeneration === generation) return this.startPromise;
+    this.startGeneration = generation;
+    const pending = this.start(generation).finally(() => { if (this.startPromise === pending) this.startPromise = null; });
+    this.startPromise = pending;
+    return pending;
   }
 
-  async start() {
+  async start(generation = this.lifecycle) {
     if (!this.fileExists(join(this.projectDirectory, "src", "scansci_pdf", "web.py"))) {
       throw this.fail(`ScanSci PDF 项目不存在: ${this.projectDirectory}`);
     }
@@ -91,7 +102,10 @@ export class ScanSciService {
     this.state = "starting";
     this.lastError = "";
     this.logs = [];
-    const args = [...python.args, "-m", "scansci_pdf.main", "web", "--host", this.host, "--port", String(this.port)];
+    const port = this.hosted ? await this.reservePort(this.port) : this.port;
+    if (this.stopping || generation !== this.lifecycle) throw new Error("ScanSci startup was stopped");
+    this.port = port;
+    const args = [...python.args, "-m", ...(this.hosted ? ["scansci_pdf.ego_host"] : ["scansci_pdf.main", "web"]), "--host", this.host, "--port", String(this.port)];
     const sourceDirectory = join(this.projectDirectory, "src");
     const env = {
       ...process.env,
@@ -99,6 +113,7 @@ export class ScanSciService {
       PYTHONPATH: sourceDirectory,
       PYTHONNOUSERSITE: "1",
       PYTHONDONTWRITEBYTECODE: "1",
+      ...(this.hosted ? { SCANSCI_EGO_HOSTED: "1", SCANSCI_EGO_TOKEN: this.token, SCANSCI_EGO_INSTANCE: this.instanceId } : {}),
       PATH: [join(this.projectDirectory, "bin"), join(this.projectDirectory, "tor", "tor"), this.runtimeDirectory, process.env.PATH].filter(Boolean).join(delimiter),
       ...(this.dataDirectory ? { SCANSCI_PDF_DATA_DIR: this.dataDirectory } : {}),
       ...(this.pipeName ? { EGO_COMPAT_PIPE: this.pipeName } : {}),
@@ -141,7 +156,9 @@ export class ScanSciService {
 
     const deadline = Date.now() + this.startTimeoutMs;
     while (Date.now() < deadline) {
+      if (this.stopping || generation !== this.lifecycle) throw new Error("ScanSci startup was stopped");
       const current = await this.status();
+      if (this.stopping || generation !== this.lifecycle) throw new Error("ScanSci startup was stopped");
       if (current.online) return current;
       if (!this.child || this.state === "failed") throw this.fail(this.lastError || "ScanSci 服务启动失败");
       await delay(250);
@@ -165,6 +182,7 @@ export class ScanSciService {
   }
 
   async stop() {
+    this.lifecycle++;
     this.stopping = true;
     clearTimeout(this.restartTimer);
     if (!this.child && this.adoptedPid) {
@@ -189,6 +207,7 @@ export class ScanSciService {
   }
 
   dispose() {
+    this.lifecycle++;
     this.stopping = true;
     clearTimeout(this.restartTimer);
     if (this.adoptedPid) {
@@ -213,7 +232,9 @@ export class ScanSciService {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ channel, action: "check" }),
         });
-        return [channel, { ok: true, result }];
+        const ok = result.success !== false && result.available !== false && !result.error
+          && !["error", "blocked", "not_configured", "unavailable"].includes(result.status);
+        return [channel, { ok, result }];
       } catch (error) {
         return [channel, { ok: false, error: error?.message || String(error) }];
       }
@@ -239,11 +260,15 @@ export class ScanSciService {
   }
 
   async dashboard() {
-    return this.request("/api/dashboard", { method: "GET" }, 1_500);
+    return this.request("/api/dashboard", { method: "GET" }, 5_000);
   }
 
   async ping() {
-    return this.request("/api/ping", { method: "GET" }, 1_500);
+    const identity = await this.request("/api/ping", { method: "GET" }, 1_500);
+    if (this.hosted && (identity.service !== "scansci-pdf" || identity.protocol !== "ego-scansci-v1" || identity.instance !== this.instanceId)) {
+      throw new Error("ScanSci endpoint belongs to another process");
+    }
+    return identity;
   }
 
   async request(path, init, timeoutMs = this.requestTimeoutMs) {
@@ -251,7 +276,9 @@ export class ScanSciService {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await this.fetch(`${this.baseUrl}${path}`, { ...init, signal: controller.signal });
+      const response = await this.fetch(`${this.baseUrl}${path}`, {
+        ...init, headers: { ...init?.headers, ...(this.hosted ? { "x-ego-scansci-token": this.token } : {}) }, signal: controller.signal,
+      });
       if (!response.ok) {
         const detail = await response.text().catch(() => "");
         throw new Error(`HTTP ${response.status}${detail ? `: ${detail.slice(0, 240)}` : ""}`);
@@ -291,6 +318,7 @@ export class ScanSciService {
   }
 
   adopt(dashboard) {
+    if (this.hosted) return;
     if (this.child || this.adoptedPid) return;
     const reportedRoot = dashboard?.project?.root;
     if (!reportedRoot || resolve(reportedRoot).toLocaleLowerCase() !== this.projectDirectory.toLocaleLowerCase()) return;
@@ -303,6 +331,18 @@ export class ScanSciService {
     this.lastError = message;
     return new Error(message);
   }
+}
+
+async function availablePort(preferred) {
+  for (let port = preferred; port < Math.min(preferred + 20, 65536); port++) {
+    const free = await new Promise((resolvePort, reject) => {
+      const server = createServer();
+      server.once("error", error => error.code === "EADDRINUSE" ? resolvePort(false) : reject(error));
+      server.listen(port, "127.0.0.1", () => server.close(() => resolvePort(true)));
+    });
+    if (free) return port;
+  }
+  throw new Error("No available local port for ScanSci PDF");
 }
 
 function delay(milliseconds) {

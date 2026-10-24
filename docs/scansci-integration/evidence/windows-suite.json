@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "executable": "A:\\Project\\egolite\\release\\public-source\\release\\win-unpacked\\EgoLite.exe",
+  "developerToolsOnPath": false,
+  "checkedAt": "2026-10-24T15:58:11.323Z",
+  "checks": {
+    "desktop": true,
+    "broker": true,
+    "scanSciBundledService": true,
+    "defaultBrowserIntegration": true,
+    "browserPageInteraction": true,
+    "autonomousSharedWorkspace": true,
+    "desktop-mcp.mjs": 22,
+    "desktopMcpCall": true,
+    "ego-mcp.mjs": 45,
+    "pythonDiscoveryPdfBridge": true,
+    "scanSciRealBrowserBridge": true,
+    "scanSciCookieReadWrite": true,
+    "scanSciAuthenticatedBrowserPdf": true,
+    "codexNativeRuntime": true,
+    "scanSciMcpTools": 20,
+    "torBinary": true,
+    "selfContainedNativeHost": true,
+    "scanSciCrashRecovery": true,
+    "brokerCrashRecovery": true,
+    "screenshot": true
+  }
+}

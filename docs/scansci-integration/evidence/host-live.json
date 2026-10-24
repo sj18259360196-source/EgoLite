@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-24T15:59:54.602Z",
+  "version": "1.19.0",
+  "checks": {
+    "foreignPortPreserved": true,
+    "realOwnedProcess": true,
+    "settingsAndAuthorization": true,
+    "realSettingsSave": true,
+    "restartPreservesData": true,
+    "liveSearch": [
+      {
+        "title": "Is Attention All You Need?",
+        "doi": "10.1007/978-3-031-84300-6_13",
+        "url": "https://doi.org/10.1007/978-3-031-84300-6_13",
+        "authors": [
+          "Patrick Mineault"
+        ],
+        "year": 2025,
+        "cited_by_count": 55,
+        "abstract": "",
+        "is_oa": false,
+        "oa_url": ""
+      },
+      {
+        "title": "Attention Is All You Need: An Analysis Of The Valuation Of Artificial Intelligence Tokens",
+        "doi": "10.2139/ssrn.4993784",
+        "url": "https://doi.org/10.2139/ssrn.4993784",
+        "authors": [
+          "Mfon Akpan"
+        ],
+        "year": "",
+        "cited_by_count": 0,
+        "abstract": "This study discusses the parameters that define the value of artificial intelligence (AI) tokens based on user interaction, their pricing mechanism, and their correlation with the predicted value thus evaluating AI token valuation based on user engagement, pricing, and website visits. This study tests hypotheses that examine the factors that influence the value of AI tokens. Using data from ten AI tokens, the study employs correlation and regression analyses to examine these relationship",
+        "is_oa": false,
+        "oa_url": ""
+      },
+      {
+        "title": "Attention is All You Need... Unless You Are a CISO: The Inherent Incompatibility Between Transformer Architectures and Zero-Trust Environments",
+        "doi": "10.2139/ssrn.5967774",
+        "url": "https://doi.org/10.2139/ssrn.5967774",
+        "authors": [
+          "Giuseppe Canale"
+        ],
+        "year": "",
+        "cited_by_count": 0,
+        "abstract": "",
+        "is_oa": false,
+        "oa_url": ""
+      }
+    ],
+    "liveDownload": {
+      "bytes": 2215244,
+      "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "source": "arXiv",
+      "pages": 15,
+      "title": ""
+    }
+  }
+}

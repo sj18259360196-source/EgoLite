@@ -38,6 +38,12 @@ Thumbs.db
 /output/
 /.agents/
 /.codex/
+/.venv/
+/integrations/scansci/.venv/
+/integrations/scansci/runtime/
+__pycache__/
+.pytest_cache/
+/vendor/scansci-pdf/tests/sso_test_report.json
 /.playwright-cli/
 /docs/cos-workspace-pack/evidence/*
 !/docs/cos-workspace-pack/evidence/.gitkeep

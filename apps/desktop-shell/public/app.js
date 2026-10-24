@@ -2008,6 +2008,8 @@ function automaticTabForTask(tabs) {
 }
 
 function restoreInitialBrowserTab() {
+  const selectedView = $(".view.active");
+  if (selectedView && selectedView.id !== "start-view") return;
   if (cosWorkspace.owns(state.spaces.find(task => task.taskId === activeTaskId))) {
     void showCosHome(false);
     return;
@@ -5991,7 +5993,7 @@ async function openScanSciSettings({ restart = false, forceCheck = false } = {})
         const report = await invoke("scansci.checkAll");
         const failed = report.failed?.length || 0;
         $("#scansci-channel-state").textContent = failed
-          ? `${report.passed}/${report.checked} 通过`
+          ? `${report.checked} 个通道已检查，${failed} 项需处理`
           : `${report.checked} 个通道已检查`;
         renderScanSciService(report.service || status);
         const webview = $("#scansci-settings-webview");
