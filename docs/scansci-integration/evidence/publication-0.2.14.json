@@ -1,0 +1,22 @@
+{
+  "version": "0.2.14",
+  "sourceCommit": "96fabe920c3387ad268a983616f5b82ab849ca48",
+  "repositoryVisibility": "PUBLIC",
+  "branchCi": { "runId": 40118043127, "conclusion": "success" },
+  "mainCi": { "runId": 40118350736, "conclusion": "success" },
+  "releaseId": 422889149,
+  "tag": "v0.2.14",
+  "title": "0.2.14",
+  "draft": false,
+  "releaseUrl": "https://github.com/sj18259360196-source/EgoLite/releases/tag/v0.2.14",
+  "installer": {
+    "name": "EgoLite-Setup-0.2.14-x64.exe",
+    "size": 711501321,
+    "localAndRemoteSha256": "ce22f4ab9698f43cd279c4ff0ba1f4c5b2293898aa1278f7df429bc620f52c0e"
+  },
+  "checksums": {
+    "name": "SHA256SUMS.txt",
+    "size": 95,
+    "localAndRemoteSha256": "e09329ad55df0b0b50f02e2ed04e0af05163ec4778d1175c1dad00ac61af7768"
+  }
+}

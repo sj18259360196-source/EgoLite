@@ -80,3 +80,15 @@ GitHub Release v0.2.13 已正式发布，标题为 0.2.13，安装包名称不�
 ## 0.2.14 安装包校验
 
 安装包已生成，大小为 711,501,321 字节，SHA-256 为 ce22f4ab9698f43cd279c4ff0ba1f4c5b2293898aa1278f7df429bc620f52c0e。解包后的 app.asar、CoS 入口和全部 8,140 个 ScanSci 运行时文件与最终实测程序一致，依赖检查通过。该结果为解包一致性校验，不代表已运行安装向导。
+
+## 0.2.14 发布完成
+
+源码提交 96fabe920c3387ad268a983616f5b82ab849ca48 已上传公开主分支。分支与主分支 Windows CI 均通过，运行编号为 40118043127、40118350736。发布标签 v0.2.14 指向该提交，标题为 0.2.14。
+
+安装包经本机代理上传较慢，传输期间保持草稿。GitHub 最终确认安装包大小为 711,501,321 字节，SHA-256 与本地一致后才正式发布。SHA256SUMS.txt 同时上传并核对摘要。
+
+- [0.2.14 Release](https://github.com/sj18259360196-source/EgoLite/releases/tag/v0.2.14)
+- 本地安装包保存在 A:/Project/egolite/release/v0.2.14/EgoLite-Setup-0.2.14-x64.exe。
+- 源码恢复备份保存在 A:/Project/egolite/backups/scansci-guided-setup-20261025，before.bundle 和 after-source.bundle 均已校验。
+
+本轮临时测试目录、源码基线归档和打包暂存目录已清理，隔离测试进程已退出。主工作目录保留原有代码改动，本轮实施源码在 release/public-source。日志与证据同步回主工作目录。后续仍需单独处理真实学校 SSO 验收、安装与覆盖安装验证及既有全量回归失败。
