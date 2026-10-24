@@ -61,3 +61,6 @@ Unmerged changes from the separate development checkout are not included.
 
 See [automation API](docs/automation-api.md) and
 [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Windows installers are published on the [Releases page](https://github.com/sj18259360196-source/EgoLite/releases).
+Future release naming follows [Release Naming](docs/RELEASING.md).
