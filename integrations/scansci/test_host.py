@@ -15,7 +15,7 @@ def test_host_settings_and_authorization():
         assert client.get("/settings").status_code == 200
         assert client.post("/api/config", json={"key": "email", "value": "test@example.invalid"}).status_code == 403
         assert client.post("/api/config", headers={"origin": "https://evil.example"}, json={"key": "email", "value": "bad"}).status_code == 403
-        response = client.post("/api/config", headers={"origin": "http://127.0.0.1:8765"}, json={"key": "email", "value": "test@example.invalid"})
+        response = client.post("/api/config", headers={"origin": "http://127.0.0.1:8765"}, json={"key": "email", "value": "test@example.test"})
         assert response.status_code == 200, response.text
         assert client.get("/api/dashboard").status_code == 200
         for channel in ("webvpn", "carsi", "ezproxy", "elsevier", "grey", "tor"):

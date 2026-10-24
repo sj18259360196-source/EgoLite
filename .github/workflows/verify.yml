@@ -35,4 +35,4 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           New-Item -ItemType Directory -Path .tmp/codex/scansci-ci -ErrorAction SilentlyContinue
-          integrations/scansci/.venv/Scripts/python.exe -m pytest integrations/scansci/test_host.py --basetemp=.tmp/codex/scansci-ci/pytest -p no:cacheprovider -q
+          integrations/scansci/.venv/Scripts/python.exe -m pytest integrations/scansci/test_host.py integrations/scansci/test_setup.py --basetemp=.tmp/codex/scansci-ci/pytest -p no:cacheprovider -q

@@ -1,0 +1,19 @@
+{
+  "version": "0.2.14",
+  "adapterTests": { "passed": 28, "failed": 0 },
+  "adaptedUpstreamCoreTests": { "passed": 94, "failed": 0 },
+  "releaseFocusedBrowserTests": { "passed": 118, "failed": 0 },
+  "typecheck": "passed",
+  "automationDocs": "passed",
+  "fullRepositoryTests": { "total": 752, "passed": 740, "failed": 12 },
+  "cleanPreviousSourceTests": {
+    "commit": "df94e8f36ff685ce39f63ce6898fb8e752786533",
+    "total": 752, "passed": 741, "failed": 11
+  },
+  "additionalFailure": {
+    "test": "targeted adapter preserves its extension path and refreshes changed source without a version bump",
+    "isolatedRerun": "passed"
+  },
+  "knownBaselineFailureAreas": ["SQLite task lifecycle", "workspace observation and deletion", "window title updates", "stale lease error assertions"],
+  "limits": ["Full repository suite is not green", "No real institutional SSO or external Elsevier credential verification", "Installer wizard and overwrite installation not executed"]
+}

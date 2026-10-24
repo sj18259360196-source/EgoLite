@@ -2,7 +2,7 @@
   "passed": true,
   "executable": "A:\\Project\\egolite\\release\\public-source\\release\\win-unpacked\\EgoLite.exe",
   "developerToolsOnPath": false,
-  "checkedAt": "2026-10-24T16:13:41.868Z",
+  "checkedAt": "2026-10-24T17:43:36.102Z",
   "checks": {
     "desktop": true,
     "broker": true,

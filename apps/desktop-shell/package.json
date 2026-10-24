@@ -1,6 +1,6 @@
 {
   "name": "@ego-compat/desktop-shell",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "private": true,
   "type": "module",
   "main": "main.mjs",

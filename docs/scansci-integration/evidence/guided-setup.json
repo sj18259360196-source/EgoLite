@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-24T17:45:11.674Z",
+  "version": "0.2.14",
+  "checks": {
+    "realEgoFormInteraction": true,
+    "schoolCatalogAutofill": true,
+    "manualSchoolFallback": true,
+    "unsavedDraftSurvivesRefresh": true,
+    "batchConfigurationPersisted": true,
+    "secretNotEchoed": true,
+    "previousConfigBackup": true,
+    "browserRestartRetainsConfig": true,
+    "savedCookiesRetained": true,
+    "savedCookiesNotAssumedValid": true
+  },
+  "limits": [
+    "No real institutional SSO or external API credentials used"
+  ]
+}

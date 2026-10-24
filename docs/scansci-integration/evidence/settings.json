@@ -1,17 +1,17 @@
 {
   "passed": true,
-  "checkedAt": "2026-10-24T15:58:39.119Z",
+  "checkedAt": "2026-10-24T17:42:12.431Z",
   "renderer": {
     "active": true,
-    "service": "运行中 · PID 29768",
+    "service": "运行中 · PID 51584",
     "channels": "8 个通道已检查，1 项需处理",
     "owner": "EgoLite 托管",
     "error": "",
-    "webviewUrl": "http://127.0.0.1:7397/settings"
+    "webviewUrl": "http://127.0.0.1:5487/settings"
   },
   "page": {
     "title": "ScanSci PDF 状态与设置",
-    "bodyLength": 848,
+    "bodyLength": 779,
     "fields": 13
   },
   "version": "1.19.0"

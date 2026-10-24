@@ -106,6 +106,30 @@
         .toast { position: fixed; right: 22px; bottom: 22px; width: min(390px, calc(100vw - 44px)); padding: 13px 15px; border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: var(--radius); background: var(--surface); box-shadow: 0 12px 34px rgba(34,45,55,.16); font-size: 12px; z-index: 30; }
         .toast.error { border-left-color: var(--red); }
         .busy { animation: pulse 1s ease-in-out infinite; }
+        .guide-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+        .guide-tabs button { min-height: 44px; padding: 0 2px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); font-size: 13px; }
+        .guide-tabs button[aria-selected="true"] { color: var(--blue); border-bottom-color: var(--blue); font-weight: 650; }
+        .guide-pane[hidden] { display: none; }
+        .guide-pane h2 { margin: 0 0 8px; font-size: 18px; }
+        .guide-pane p { color: var(--muted); font-size: 13px; line-height: 1.65; margin: 6px 0 18px; max-width: 760px; }
+        .guide-form { display: grid; gap: 16px; max-width: 740px; padding: 0; border: 0; margin: 20px 0; }
+        .guide-form label { display: grid; gap: 7px; font-size: 13px; font-weight: 600; }
+        .guide-form input, .guide-form select { min-height: 38px; font-weight: 400; }
+        .guide-form small, .guide-note { color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.6; }
+        .guide-inline { display: flex; gap: 8px; align-items: center; }
+        .guide-inline input { min-width: 0; }
+        .guide-form label.guide-check { display: flex; align-items: center; gap: 9px; font-weight: 400; }
+        .guide-check input { width: 16px; height: 16px; min-height: 16px; margin: 0; }
+        .guide-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+        .guide-result { min-height: 26px; font-size: 13px; color: var(--green); line-height: 1.6; overflow-wrap: anywhere; }
+        .guide-result.error { color: var(--red); }
+        .guide-choice { min-height: 145px !important; }
+        .guide-option { border-top: 1px solid var(--line); padding: 18px 0; }
+        .guide-option summary { cursor: pointer; font-size: 14px; font-weight: 650; }
+        .guide-option[open] summary { margin-bottom: 16px; }
+        .guide-session { display: grid; grid-template-columns: 160px minmax(180px, 1fr) auto; gap: 18px; align-items: center; border-top: 1px solid var(--line); padding: 18px 0; font-size: 13px; }
+        .guide-session small { display: block; color: var(--muted); margin-top: 6px; }
+        .storage-note { margin: 18px 0; padding: 12px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; overflow-wrap: anywhere; line-height: 1.7; }
         @keyframes pulse { 50% { opacity: .52; } }
         @media (max-width: 960px) {
             .app { grid-template-columns: 1fr; }
@@ -139,6 +163,7 @@
         <div class="brand"><strong>ScanSci PDF</strong><span>本地文献通道控制台</span></div>
         <nav class="nav" aria-label="页面导航">
             <button class="active" data-view="status"><span class="nav-icon">●</span>状态详情</button>
+            <button data-view="guide">辅助设置</button>
             <button data-view="settings"><span class="nav-icon">⚙</span>设置</button>
             <button data-view="diagnostics"><span class="nav-icon">⌁</span>诊断结果</button>
             <a href="/"><span class="nav-icon">⌕</span>论文检索</a>
@@ -151,7 +176,8 @@
             <div><h1 id="pageTitle">状态详情</h1><p id="checkedAt">正在读取本机配置</p></div>
             <div class="toolbar">
                 <button class="btn" id="refreshBtn" title="刷新全部状态"><b>↻</b><span>刷新</span></button>
-                <button class="btn primary" data-open-settings title="打开设置"><b>⚙</b><span>设置</span></button>
+                <button class="btn primary" data-view="guide">辅助设置</button>
+                <button class="btn" data-open-settings title="打开高级设置"><b>⚙</b><span>高级设置</span></button>
             </div>
         </header>
 
@@ -164,7 +190,7 @@
                         <div class="summary-note" id="overallNote">正在连接 EgoLite 与本地服务</div>
                     </div>
                     <div class="metric"><div class="metric-label">浏览器</div><div class="metric-value" id="browserMetric">...</div><div class="metric-note">EgoLite 原生桥接</div></div>
-                    <div class="metric"><div class="metric-label">机构通道</div><div class="metric-value" id="institutionMetric">...</div><div class="metric-note">ECNU WebVPN 优先</div></div>
+                    <div class="metric"><div class="metric-label">机构通道</div><div class="metric-value" id="institutionMetric">...</div><div class="metric-note">按所选学校配置</div></div>
                     <div class="metric"><div class="metric-label">灰色源</div><div class="metric-value" id="greyMetric">...</div><div class="metric-note">需显式开启</div></div>
                 </div>
 
@@ -177,6 +203,64 @@
                     <div class="section-head"><h2>下载通道</h2><span>检查、登录与启停都在这里完成</span></div>
                     <div class="channel-list" id="channelList"></div>
                 </div>
+            </section>
+
+            <section class="view" id="guideView" hidden>
+                <div class="guide-tabs" role="tablist" aria-label="辅助设置步骤">
+                    <button data-guide="basic" role="tab" aria-selected="true">1 基础设置</button>
+                    <button data-guide="school" role="tab" aria-selected="false">2 学校登录</button>
+                    <button data-guide="optional" role="tab" aria-selected="false">3 可选通道</button>
+                    <button data-guide="session" role="tab" aria-selected="false">4 状态保留</button>
+                </div>
+                <section class="guide-pane" data-guide-pane="basic" role="tabpanel">
+                    <h2>先设置开放获取</h2>
+                    <p>填写常用邮箱供 Unpaywall 查询使用。没有学校账号或 API Key，也可以下载开放获取论文。</p>
+                    <form class="guide-form" id="basicForm">
+                        <label for="guideEmail">常用邮箱<input id="guideEmail" type="email" autocomplete="email" required placeholder="填写你自己的邮箱"><small>使用可用邮箱，不需要提供邮箱密码。</small></label>
+                        <label for="guideOutput">下载目录<input id="guideOutput" type="text" required><small>配置和登录会话另行保存在本机，更新程序不替换它们。</small></label>
+                        <div class="guide-actions"><button class="btn primary" type="submit">保存基础设置</button><button class="btn" type="button" data-guide="school">继续设置学校</button></div>
+                    </form>
+                </section>
+                <section class="guide-pane" data-guide-pane="school" role="tabpanel" hidden>
+                    <h2>选择你的学校</h2>
+                    <p>选择学校后自动填写 WebVPN 入口。学校不在列表时，填写图书馆提供的名称和入口。</p>
+                    <form class="guide-form" id="schoolSearchForm">
+                        <label for="schoolQuery">搜索学校<div class="guide-inline"><input id="schoolQuery" type="search" placeholder="学校、地区或域名"><button class="btn" type="submit">搜索</button></div></label>
+                        <label for="schoolChoices">学校列表<select id="schoolChoices" class="guide-choice" size="5" aria-describedby="schoolSearchNote"></select><small id="schoolSearchNote">正在读取内置学校列表</small></label>
+                    </form>
+                    <form class="guide-form" id="schoolForm">
+                        <label for="guideSchool">学校名称<input id="guideSchool" type="text" placeholder="填写学校名称"></label>
+                        <label for="guideWebvpn">WebVPN 入口<input id="guideWebvpn" type="url" placeholder="https://学校提供的入口" required><small>从学校图书馆网站确认入口，不需要填写用户名和密码。</small></label>
+                        <div class="guide-actions"><button class="btn primary" type="submit">保存并启用 WebVPN</button><button class="btn" type="button" data-action="login" data-channel="webvpn">在 Ego 中登录</button><button class="btn" type="button" data-action="check" data-channel="webvpn">检查登录状态</button></div>
+                        <div class="guide-note" id="schoolSession"></div>
+                    </form>
+                </section>
+                <section class="guide-pane" data-guide-pane="optional" role="tabpanel" hidden>
+                    <h2>按需要添加通道</h2>
+                    <p>这些通道可以单独设置，不必全部开启。已有可用学校通道时，可以先开始下载。</p>
+                    <details class="guide-option" id="elsevierGuide"><summary>Elsevier API</summary>
+                        <p>在 Elsevier 开发者网站登录并申请 API Key，复制到下方。Key 不等于全文订阅权限，全文访问还取决于机构授权和网络。</p>
+                        <button class="btn" data-action="open" data-channel="elsevier">打开官方申请页面</button>
+                        <form class="guide-form" id="elsevierForm"><label for="guideApiKey">API Key<input id="guideApiKey" type="password" autocomplete="new-password" placeholder="留空保留已保存的 Key"><small id="apiKeyState"></small></label><div class="guide-actions"><button class="btn primary" type="submit">保存 Key</button><button class="btn" type="button" data-action="test" data-channel="elsevier">测试 API</button></div></form>
+                    </details>
+                    <details class="guide-option" id="carsiGuide"><summary>CARSI 机构认证</summary>
+                        <p>学校参加 CARSI 且订阅了目标出版社时可用。填写认证页面中的学校名称，再选择要登录的出版社。</p>
+                        <form class="guide-form" id="carsiForm"><label for="guideCarsi">CARSI 学校名称<input id="guideCarsi" type="text" required></label><div class="guide-actions"><button class="btn primary" type="submit">保存并启用 CARSI</button><select id="guidePublisher" aria-label="CARSI 出版社" style="width:190px"><option value="sciencedirect">ScienceDirect</option><option value="springer">Springer</option><option value="wiley">Wiley</option><option value="ieee">IEEE</option><option value="nature">Nature</option></select><button class="btn" type="button" data-action="login" data-channel="carsi">在 Ego 中登录</button></div></form>
+                    </details>
+                    <details class="guide-option" id="ezproxyGuide"><summary>EZproxy 图书馆代理</summary>
+                        <p>只有图书馆提供 EZproxy 地址时才需要设置。不要把 WebVPN 地址填在这里。</p>
+                        <form class="guide-form" id="ezproxyForm"><label for="guideEzproxy">图书馆代理地址<input id="guideEzproxy" type="url" placeholder="图书馆提供的完整地址" required></label><div class="guide-actions"><button class="btn primary" type="submit">保存并启用代理</button><button class="btn" type="button" data-action="login" data-channel="ezproxy">在 Ego 中登录</button></div></form>
+                    </details>
+                    <details class="guide-option" id="otherGuide"><summary>灰色源与 Tor</summary><p>两个开关分别保存。开启灰色源不会自动启动 Tor，启动 Tor 也不代表机构登录有效。</p><button class="btn" data-open-settings>管理开关</button></details>
+                </section>
+                <section class="guide-pane" data-guide-pane="session" role="tabpanel" hidden>
+                    <h2>保留配置和登录会话</h2>
+                    <p>保存后即可关闭页面或重启 Ego。已保存的 Cookie 会继续复用；学校要求重新登录时，仍需在 Ego 中完成验证码或认证。</p>
+                    <form class="guide-form" id="sessionForm"><label class="guide-check"><input type="checkbox" id="guideRelogin">下载时发现机构会话已过期，打开 Ego 重新登录</label><div class="guide-actions"><button class="btn primary" type="submit">保存恢复设置</button><button class="btn" type="button" id="recheckSessions">检查已启用的会话</button></div></form>
+                    <div id="sessionList"></div>
+                    <div class="storage-note" id="storageNote"></div>
+                </section>
+                <div class="guide-result" id="guideResult" role="status" aria-live="polite"></div>
             </section>
 
             <section class="view" id="settingsView" hidden>
@@ -193,13 +277,13 @@
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const state = { data: null, busy: new Set(), view: 'status' };
+const state = { data: null, busy: new Set(), view: 'status', guide: 'basic', drafts: new Map(), loadSequence: 0, schoolSequence: 0, selectedSchool: '' };
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const channelMeta = {
     egolite: { name: 'EgoLite', sub: '唯一浏览器后端' },
-    webvpn: { name: 'ECNU WebVPN', sub: '学校机构授权主通道' },
+    webvpn: { name: '学校 WebVPN', sub: '通过学校入口访问订阅文献' },
     elsevier: { name: 'Elsevier API', sub: 'ScienceDirect 批量快速通道' },
     oa: { name: '开放获取', sub: 'Unpaywall、OpenAlex、CORE 等' },
     carsi: { name: 'CARSI', sub: '出版社联合身份认证' },
@@ -212,7 +296,16 @@ function channelStatus(key, item) {
     if (key === 'egolite') return item.available
         ? ['ok', '在线', item.strict_egolite ? '严格 EgoLite 模式' : '存在外部浏览器回退']
         : ['off', '离线', '刷新会尝试自动唤醒'];
-    if (key === 'webvpn') return item.session_valid ? ['ok', '已登录', item.vpnsci_school || 'East China Normal University'] : item.vpnsci_enabled ? ['warn', '需要检查', '已配置，当前会话未确认'] : ['off', '未启用', '可在设置中开启'];
+    if (['webvpn', 'carsi', 'ezproxy'].includes(key)) {
+        const last = item.last_check ? `，${new Date(item.last_check).toLocaleString()}` : '';
+        if (item.session_state === 'disabled') return ['off', '未启用', item.has_cookies ? '已保存的会话仍保留' : '按需要设置，无需全部开启'];
+        if (item.session_state === 'needs_configuration') return ['warn', '尚未完成配置', key === 'webvpn' ? '选择学校或填写入口' : key === 'carsi' ? '填写认证页面中的学校名称' : '填写图书馆提供的代理地址'];
+        if (item.session_state === 'expired') return ['warn', '登录已过期', `请在 Ego 中重新登录${last}`];
+        if (item.session_state === 'unreachable') return ['warn', '网络暂不可达', `已保留本机登录会话${last}`];
+        if (item.session_valid) return ['ok', '最近验证通过', `会话已保存在本机${last}`];
+        if (item.has_cookies) return ['warn', '会话已保存', `可继续复用，需要时检查有效性${last}`];
+        return ['warn', '等待登录', '配置已保存，点击登录后完成学校认证'];
+    }
     if (key === 'elsevier') return item.status === 'configured' ? ['ok', 'Key 已配置', item.test ? `验证 ${item.test}` : '可单独测试 API'] : ['warn', '未配置', '付费全文将转机构通道'];
     if (key === 'oa') return item.configured ? ['ok', '已配置', '可运行实时网络检查'] : ['warn', '邮箱待配置', 'Unpaywall 需要有效邮箱'];
     if (key === 'carsi') return item.carsi_enabled ? ['warn', '已启用', item.carsi_idp_name || '学校名称待设置'] : ['off', '未启用', '当前由 WebVPN 承担机构访问'];
@@ -235,16 +328,17 @@ function channelStatus(key, item) {
 }
 
 function actionsFor(key, item) {
+    const guide = `<button class="btn" data-help="${key}">设置</button>`;
     const check = `<button class="btn" data-action="check" data-channel="${key}">检查</button>`;
     if (key === 'egolite') return check;
-    if (key === 'webvpn') return `${check}<button class="btn" data-action="test" data-channel="webvpn">测试</button><button class="btn primary" data-action="login" data-channel="webvpn">登录</button>`;
-    if (key === 'elsevier') return `<button class="btn" data-action="test" data-channel="elsevier">测试 API</button>`;
-    if (key === 'oa') return `<button class="btn" data-action="check" data-channel="oa">网络检查</button>`;
-    if (key === 'carsi') return `${check}<button class="btn" data-action="login" data-channel="carsi">登录</button>`;
+    if (key === 'webvpn') return `${guide}${check}<button class="btn primary" data-action="login" data-channel="webvpn">登录</button>`;
+    if (key === 'elsevier') return `${guide}<button class="btn" data-action="test" data-channel="elsevier">测试 API</button>`;
+    if (key === 'oa') return `${guide}<button class="btn" data-action="check" data-channel="oa">网络检查</button>`;
+    if (key === 'carsi') return `${guide}${check}<button class="btn" data-action="login" data-channel="carsi">登录</button>`;
     if (key === 'ezproxy') {
         if (item.configuration_state === 'not_applicable') return `${check}<button class="btn" data-focus-channel="webvpn">查看主通道</button>`;
-        if (!item.ezproxy_enabled || !item.ezproxy_login_url) return `${check}<button class="btn" data-configure="ezproxy_login_url">配置</button>`;
-        return `${check}<button class="btn" data-action="login" data-channel="ezproxy">登录</button>`;
+        if (!item.ezproxy_enabled || !item.ezproxy_login_url) return `${check}${guide}`;
+        return `${guide}${check}<button class="btn" data-action="login" data-channel="ezproxy">登录</button>`;
     }
     if (key === 'grey') return '<button class="btn" data-view="settings">管理开关</button>';
     if (key === 'tor') return item.running ? `<button class="btn danger" data-action="stop" data-channel="tor">停止</button>` : `<button class="btn" data-action="install" data-channel="tor">安装</button><button class="btn primary" data-action="start" data-channel="tor">启动</button>`;
@@ -274,13 +368,13 @@ function renderStatus() {
     const browserOk = !!channels.egolite.available;
     const webvpnOk = !!channels.webvpn.session_valid;
     const configuredCount = ['webvpn','elsevier','oa','carsi','ezproxy'].filter(k => ['ok','warn'].includes(channelStatus(k, channels[k])[0])).length;
-    $('#overallDot').className = `dot ${browserOk && webvpnOk ? 'ok' : 'warn'}`;
-    $('#overallText').textContent = browserOk && webvpnOk ? '核心通道可用' : '部分通道需要处理';
-    $('#overallNote').textContent = browserOk ? 'EgoLite 已连接，下载按合法来源与机构授权优先执行' : 'EgoLite 当前不可达，刷新会尝试自动唤醒';
+    $('#overallDot').className = `dot ${browserOk ? 'ok' : 'warn'}`;
+    $('#overallText').textContent = browserOk ? (webvpnOk ? '浏览器与学校通道可用' : '浏览器已就绪') : '浏览器需要连接';
+    $('#overallNote').textContent = browserOk ? '可使用开放获取下载，其他通道按需要设置' : 'EgoLite 当前不可达，可点击检查重新连接';
     $('#browserMetric').textContent = browserOk ? '在线' : '离线';
     $('#institutionMetric').textContent = `${configuredCount} 项`;
     $('#greyMetric').textContent = channels.grey.enabled ? '已开启' : '关闭';
-    const routeLabels = { cache:'本地缓存', open_access:'开放获取', elsevier_api:'Elsevier API', institution:'ECNU / 机构', grey_opt_in:'灰色源（显式）' };
+    const routeLabels = { cache:'本地缓存', open_access:'开放获取', elsevier_api:'Elsevier API', institution:'学校 / 机构', grey_opt_in:'灰色源（显式）' };
     $('#route').innerHTML = `<b>${esc(state.data.settings.download_strategy || 'oa_first')}</b>` + state.data.priority.map((key, i) => `${i ? '<span class="arrow">→</span>' : ''}<span class="pill ${key === 'institution' ? 'blue' : key === 'grey_opt_in' ? 'warn' : 'good'}">${routeLabels[key]}</span>`).join('');
     const order = ['egolite','webvpn','elsevier','oa','carsi','ezproxy','grey','tor'];
     $('#channelList').innerHTML = order.map(key => {
@@ -309,14 +403,14 @@ const groups = [
         ['egolite_task_space','任务空间','浏览器共享工作区名称','text'],
         ['auto_relogin','会话自动恢复','机构 Cookie 过期时重新登录','toggle'],
     ]],
-    ['ECNU 与机构访问', [
+    ['学校与机构访问', [
         ['vpnsci_enabled','启用 WebVPN','当前主机构通道','toggle'],
-        ['vpnsci_school','学校名称','East China Normal University','text'],
-        ['vpnsci_base_url','WebVPN 地址','ECNU 代理入口','text'],
+        ['vpnsci_school','学校名称','选择学校后自动填写','text'],
+        ['vpnsci_base_url','WebVPN 地址','学校提供的官方入口','text'],
         ['carsi_enabled','启用 CARSI','出版社联合认证','toggle'],
         ['carsi_idp_name','CARSI 学校','建议填写英文机构名','text'],
         ['ezproxy_enabled','启用 EZproxy','仅在学校明确提供时开启','toggle'],
-        ['ezproxy_login_url','EZproxy 地址','ECNU 不提供此入口，保持为空','text'],
+        ['ezproxy_login_url','EZproxy 地址','未提供此代理时保持为空','text'],
     ]],
     ['API 与开放获取', [
         ['email','Unpaywall 邮箱','用于开放获取查询','email'],
@@ -336,7 +430,7 @@ const groups = [
 function renderSettings() {
     const values = state.data.settings;
     $('#settingsGrid').innerHTML = groups.map(([title, fields]) => `<section class="settings-group"><h2>${title}</h2>${fields.map(([key,label,note,type,options]) => {
-        const value = key === 'elsevier_api_key' ? '' : values[key];
+        const value = state.drafts.has(key) ? state.drafts.get(key) : key === 'elsevier_api_key' ? '' : values[key];
         let control = '';
         if (type === 'toggle') control = `<button class="toggle ${value ? 'on' : ''}" data-toggle="${key}" data-value="${!value}" aria-label="${label}"></button><span class="pill ${value ? 'blue' : ''}">${value ? '已开启' : '已关闭'}</span>`;
         else if (type === 'select') control = `<select data-setting="${key}">${options.map(v => `<option value="${v}" ${String(value) === v ? 'selected' : ''}>${v}</option>`).join('')}</select><button class="btn" data-save="${key}">保存</button>`;
@@ -358,20 +452,149 @@ function showDiagnostic(title, result) {
     $('#diagnosticOutput').textContent = `${title}\n\n${JSON.stringify(result, null, 2)}`;
 }
 
+function guideMessage(message, error=false) {
+    $('#guideResult').textContent = message;
+    $('#guideResult').classList.toggle('error', error);
+}
+
+function showGuide(step) {
+    switchView('guide');
+    state.guide = step;
+    document.querySelectorAll('[data-guide-pane]').forEach(el => el.hidden = el.dataset.guidePane !== step);
+    document.querySelectorAll('[role="tab"][data-guide]').forEach(el => el.setAttribute('aria-selected', String(el.dataset.guide === step)));
+    guideMessage('');
+    if (step === 'school' && !state.schoolsLoaded) searchSchools();
+}
+
+function openGuide(channel) {
+    const step = channel === 'oa' ? 'basic' : channel === 'webvpn' ? 'school' : channel === 'egolite' ? 'session' : 'optional';
+    showGuide(step);
+    if (step === 'optional') {
+        const id = ({elsevier:'elsevierGuide', carsi:'carsiGuide', ezproxy:'ezproxyGuide'})[channel] || 'otherGuide';
+        document.querySelectorAll('.guide-option').forEach(el => el.open = el.id === id);
+    }
+}
+
+function renderGuide() {
+    const values = state.data.settings;
+    const fill = (id, value) => {
+        const input = document.getElementById(id);
+        if (!input.dataset.dirty) {
+            if (input.type === 'checkbox') input.checked = !!value;
+            else input.value = value ?? '';
+        }
+    };
+    fill('guideEmail', values.email?.endsWith('.invalid') ? '' : values.email);
+    fill('guideOutput', values.output_dir);
+    fill('guideSchool', values.vpnsci_school);
+    fill('guideWebvpn', state.data.channels.webvpn.vpnsci_base_url);
+    fill('guideCarsi', values.carsi_idp_name || values.vpnsci_school);
+    fill('guideEzproxy', values.ezproxy_login_url);
+    fill('guideRelogin', values.auto_relogin);
+    $('#apiKeyState').textContent = state.data.secrets.elsevier_api_key_configured ? 'Key 已保存，完整值不在页面回显' : '尚未保存 Key，可以跳过此项';
+    $('#schoolSession').textContent = channelStatus('webvpn', state.data.channels.webvpn).slice(1).join(' · ');
+    $('#sessionList').innerHTML = ['webvpn','carsi','ezproxy'].map(key => {
+        const item = state.data.channels[key];
+        const [,label,note] = channelStatus(key, item);
+        return `<div class="guide-session"><strong>${channelMeta[key].name}</strong><div>${esc(label)}<small>${esc(note)}</small></div><button class="btn" data-action="check" data-channel="${key}">检查状态</button></div>`;
+    }).join('');
+    const storage = state.data.storage || {};
+    $('#storageNote').textContent = `${storage.config_saved ? '配置已保存' : '尚未保存配置'}${storage.backup_available ? '，已有上一份配置备份' : ''}。本机数据目录 ${storage.data_directory || ''}。最近验证结果带时间保存，超过 5 分钟显示待复查，不会删除 Cookie。`;
+    document.querySelectorAll('[data-action][data-channel]').forEach(el => el.disabled = state.busy.has(el.dataset.channel));
+}
+
+async function searchSchools() {
+    const sequence = ++state.schoolSequence;
+    try {
+        const response = await fetch(`/api/setup/schools?query=${encodeURIComponent($('#schoolQuery').value.trim())}`);
+        if (!response.ok) throw new Error('学校列表读取失败，请重试或手动填写入口');
+        const result = await response.json();
+        if (sequence !== state.schoolSequence) return;
+        state.schoolsLoaded = true;
+        state.schoolOptions = result.schools;
+        $('#schoolChoices').innerHTML = '<option value="">手动填写学校与入口</option>' + result.schools.map(s => `<option value="${esc(s.name)}">${esc(s.name)} · ${esc(s.province)}</option>`).join('');
+        $('#schoolChoices').value = state.selectedSchool;
+        $('#schoolSearchNote').textContent = result.total ? `找到 ${result.total} 所学校${result.total > result.schools.length ? '，请缩小关键词' : ''}。选择后会填写入口。` : '列表中没有匹配项，请从学校图书馆网站确认入口后手动填写。';
+    } catch (error) { guideMessage(error.message, true); }
+}
+
+async function saveGuide(form, channel, values, school='') {
+    if (form.dataset.saving) return;
+    form.dataset.saving = 'true';
+    const button = form.querySelector('[type="submit"]');
+    button.disabled = true;
+    try {
+        const response = await fetch('/api/setup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({channel, values, school})});
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.error || '保存失败');
+        form.querySelectorAll('input').forEach(input => delete input.dataset.dirty);
+        if (channel === 'elsevier') $('#guideApiKey').value = '';
+        await loadDashboard(true);
+        const message = channel === 'webvpn' || channel === 'carsi' || channel === 'ezproxy' ? '设置已保存并启用，可以在 Ego 中登录' : '已保存，重启 Ego 后继续使用';
+        guideMessage(message);
+        showToast(message);
+    } catch (error) { guideMessage(error.message, true); }
+    finally { delete form.dataset.saving; button.disabled = false; }
+}
+
+const guideForms = {basicForm:'basic', schoolForm:'webvpn', elsevierForm:'elsevier', carsiForm:'carsi', ezproxyForm:'ezproxy', sessionForm:'session'};
+for (const [id, channel] of Object.entries(guideForms)) {
+    const form = document.getElementById(id);
+    form.addEventListener('input', event => {
+        event.target.dataset.dirty = channel;
+        if (channel === 'webvpn') state.selectedSchool = '';
+    });
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        const values = {
+            basic: () => ({email:$('#guideEmail').value, output_dir:$('#guideOutput').value}),
+            webvpn: () => ({vpnsci_enabled:true, vpnsci_school:$('#guideSchool').value, vpnsci_base_url:$('#guideWebvpn').value}),
+            elsevier: () => ({elsevier_api_key:$('#guideApiKey').value}),
+            carsi: () => ({carsi_enabled:true, carsi_idp_name:$('#guideCarsi').value}),
+            ezproxy: () => ({ezproxy_enabled:true, ezproxy_login_url:$('#guideEzproxy').value}),
+            session: () => ({auto_relogin:$('#guideRelogin').checked}),
+        }[channel]();
+        saveGuide(form, channel, values, channel === 'webvpn' ? state.selectedSchool : '');
+    });
+}
+$('#schoolSearchForm').addEventListener('submit', event => { event.preventDefault(); searchSchools(); });
+$('#schoolChoices').addEventListener('change', event => {
+    const school = state.schoolOptions?.find(item => item.name === event.target.value);
+    state.selectedSchool = school?.name || '';
+    if (school) {
+        $('#guideSchool').value = school.name;
+        $('#guideWebvpn').value = school.host;
+        $('#guideSchool').dataset.dirty = 'webvpn';
+        $('#guideWebvpn').dataset.dirty = 'webvpn';
+    }
+});
+$('#recheckSessions').addEventListener('click', async () => {
+    $('#recheckSessions').disabled = true;
+    try {
+        for (const key of ['webvpn','carsi','ezproxy']) {
+            if (state.data.settings[({webvpn:'vpnsci_enabled',carsi:'carsi_enabled',ezproxy:'ezproxy_enabled'})[key]]) await channelAction(key, 'check');
+        }
+    } finally { $('#recheckSessions').disabled = false; }
+});
+
 async function loadDashboard(quiet=false) {
+    const sequence = ++state.loadSequence;
     $('#refreshBtn').disabled = true;
     try {
         const resp = await fetch('/api/dashboard');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        state.data = await resp.json();
+        const data = await resp.json();
+        if (sequence !== state.loadSequence) return;
+        state.data = data;
         $('#checkedAt').textContent = `最后刷新 ${new Date(state.data.checked_at).toLocaleString()}`;
         renderStatus();
         renderSettings();
+        renderGuide();
         if (!quiet) showToast('状态已刷新');
     } catch (error) {
         showToast(`刷新失败 ${error.message}`, true);
     } finally {
-        $('#refreshBtn').disabled = false;
+        if (sequence === state.loadSequence) $('#refreshBtn').disabled = false;
     }
 }
 
@@ -381,15 +604,27 @@ async function saveSetting(key, value) {
         const result = await resp.json();
         showDiagnostic(`设置 ${key}`, result);
         if (!resp.ok || result.success === false) throw new Error(result.error || '保存失败');
+        state.drafts.delete(key);
         showToast(`${key} 已保存`);
         await loadDashboard(true);
     } catch (error) { showToast(error.message, true); }
 }
 
 async function channelAction(channel, action) {
-    state.busy.add(channel); renderStatus();
+    if (state.busy.has(channel)) return;
+    if (action === 'login' && ['webvpn', 'carsi', 'ezproxy'].includes(channel)) {
+        const settings = state.data?.settings || {};
+        const ready = channel === 'webvpn' ? settings.vpnsci_enabled && state.data.channels.webvpn.vpnsci_base_url : channel === 'carsi' ? settings.carsi_enabled && settings.carsi_idp_name : settings.ezproxy_enabled && settings.ezproxy_login_url;
+        if (!ready || (state.view === 'guide' && [...document.querySelectorAll('#schoolForm input, #carsiForm input, #ezproxyForm input')].some(input => input.dataset.dirty === channel))) {
+            openGuide(channel);
+            guideMessage('请先保存该通道的设置，再登录', true);
+            return;
+        }
+    }
+    state.busy.add(channel); renderStatus(); renderGuide();
+    guideMessage(action === 'login' ? '请在 Ego 打开的页面中完成登录，完成后会保存会话' : '正在处理，请稍候');
     try {
-        const resp = await fetch('/api/channel/action', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({channel, action})});
+        const resp = await fetch('/api/channel/action', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({channel, action, publisher: $('#guidePublisher').value})});
         const result = await resp.json();
         showDiagnostic(`${channel} ${action}`, result);
         if (result.error_type === 'needs_configuration') {
@@ -401,10 +636,12 @@ async function channelAction(channel, action) {
             throw new Error(result.error || '当前学校不使用此通道');
         }
         if (!resp.ok || result.success === false) throw new Error(result.error || '操作失败');
-        showToast(`${channel} ${action} 已完成`);
+        const message = result.session_state ? channelStatus(channel, result)[1] : action === 'open' ? '已在 Ego 打开官方页面' : action === 'login' ? '登录操作完成，会话已保存在本机' : '检查完成';
+        showToast(message);
+        guideMessage(message);
         await loadDashboard(true);
-    } catch (error) { showToast(error.message, true); }
-    finally { state.busy.delete(channel); if (state.data) renderStatus(); }
+    } catch (error) { showToast(error.message, true); guideMessage(error.message, true); }
+    finally { state.busy.delete(channel); if (state.data) { renderStatus(); renderGuide(); } }
 }
 
 function openSetting(key) {
@@ -427,13 +664,17 @@ function switchView(view) {
     state.view = view;
     document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== `${view}View`);
     document.querySelectorAll('[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
-    $('#pageTitle').textContent = ({status:'状态详情',settings:'设置',diagnostics:'诊断结果'})[view];
+    $('#pageTitle').textContent = ({status:'状态详情',settings:'高级设置',guide:'辅助设置',diagnostics:'诊断结果'})[view];
 }
 
 document.addEventListener('click', (event) => {
     const nav = event.target.closest('[data-view]');
     if (nav) switchView(nav.dataset.view);
     if (event.target.closest('[data-open-settings]')) switchView('settings');
+    const help = event.target.closest('[data-help]');
+    if (help) openGuide(help.dataset.help);
+    const guide = event.target.closest('button[data-guide]');
+    if (guide) showGuide(guide.dataset.guide);
     const action = event.target.closest('[data-action]');
     if (action) channelAction(action.dataset.channel, action.dataset.action);
     const configure = event.target.closest('[data-configure]');
@@ -447,6 +688,9 @@ document.addEventListener('click', (event) => {
         const input = document.querySelector(`[data-setting="${save.dataset.save}"]`);
         saveSetting(save.dataset.save, input.value);
     }
+});
+document.addEventListener('input', event => {
+    if (event.target.dataset.setting) state.drafts.set(event.target.dataset.setting, event.target.value);
 });
 $('#refreshBtn').addEventListener('click', () => loadDashboard());
 loadDashboard(true);

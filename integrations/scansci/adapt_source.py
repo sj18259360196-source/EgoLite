@@ -51,6 +51,8 @@ def adapt(source: Path) -> None:
     shutil.copy2(HERE / "pdf_validation.py", package / "ego_pdf_validation.py")
     shutil.copy2(HERE / "atomic_pdf.py", package / "ego_atomic_pdf.py")
     shutil.copy2(HERE / "browser_actions.py", package / "ego_browser_actions.py")
+    shutil.copy2(HERE / "config_state.py", package / "ego_config_state.py")
+    shutil.copy2(HERE / "setup_assistant.py", package / "ego_setup.py")
     for name in ("server.py", "main.py"):
         path = package / name
         text = path.read_text(encoding="utf-8")
@@ -81,6 +83,7 @@ def adapt(source: Path) -> None:
     "egolite_external_browser_fallback": False,''')
     for key in ("scihub_enabled", "libgen_enabled", "scibban_enabled", "use_tor_for_scihub"):
         text = text.replace(f'"{key}": True,', f'"{key}": False,')
+    text += '\nimport sys as _sys\nfrom .ego_config_state import install as _install_ego_config\n_install_ego_config(_sys.modules[__name__])\n'
     config.write_text(text, encoding="utf-8")
 
     backend = package / "browser_backend.py"

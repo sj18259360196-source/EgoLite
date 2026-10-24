@@ -21,6 +21,7 @@ from .identifiers import is_arxiv_identifier, normalize_doi
 from .log import get_logger
 from .search import search_papers
 from .sources import download
+from .ego_setup import install as install_setup, session_summary, setup_metadata, verify_session, record_check, validate_setting
 
 log = get_logger()
 
@@ -29,6 +30,7 @@ templates = Jinja2Templates(directory=str(_TEMPLATE_DIR))
 templates.env.cache_size = 0
 
 app = FastAPI(title="ScanSci PDF", description="Academic paper downloader web UI")
+install_setup(app)
 
 
 # --- Request/Response models ---
@@ -191,9 +193,9 @@ def _dashboard_payload() -> dict[str, Any]:
 
     channels = {
         "egolite": browser,
-        "webvpn": _cookie_summary(_json_call(scansci_pdf_vpnsci_status, sync_egolite=False)),
-        "carsi": _cookie_summary(_json_call(scansci_pdf_carsi_status)),
-        "ezproxy": _cookie_summary(_json_call(scansci_pdf_ezproxy_status)),
+        "webvpn": session_summary("webvpn", config),
+        "carsi": session_summary("carsi", config),
+        "ezproxy": session_summary("ezproxy", config),
         "elsevier": {
             "status": "configured" if config.get("elsevier_api_key") else "not_configured",
             "message": "Elsevier API Key 已配置。" if config.get("elsevier_api_key") else "Elsevier API Key 未配置。",
@@ -225,6 +227,7 @@ def _dashboard_payload() -> dict[str, Any]:
         "channels": channels,
         "settings": {key: safe.get(key) for key in sorted(_EDITABLE_CONFIG) if key != "elsevier_api_key"},
         "secrets": {"elsevier_api_key_configured": bool(config.get("elsevier_api_key"))},
+        "storage": setup_metadata(),
     }
 
 
@@ -264,7 +267,8 @@ async def api_config_update(req: ConfigUpdateRequest):
     if key == "elsevier_api_key" and not req.value.strip():
         return JSONResponse({"success": True, "key": key, "unchanged": True})
     try:
-        config = await asyncio.to_thread(update_config, key, req.value)
+        value = validate_setting(key, req.value)
+        config = await asyncio.to_thread(update_config, key, value)
     except Exception as exc:
         return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
     return JSONResponse({"success": True, "key": key, "value": mask_config_value(key, config.get(key))})
@@ -289,8 +293,11 @@ async def api_channel_action(req: ChannelActionRequest):
 
     channel = req.channel.strip().lower()
     action = req.action.strip().lower()
+    action_config = load_config()
 
     def run() -> dict[str, Any]:
+        if channel in {"webvpn", "carsi", "ezproxy"} and action == "check":
+            return verify_session(channel)
         if channel == "egolite":
             from .browser_backend import browser_info
             from .egolite_bridge import is_available
@@ -311,6 +318,9 @@ async def api_channel_action(req: ChannelActionRequest):
                 return _json_call(scansci_pdf_ezproxy_login)
             return _cookie_summary(_json_call(scansci_pdf_ezproxy_status))
         if channel == "elsevier":
+            if action == "open":
+                from .ego_browser_actions import open_url
+                return {"success": bool(open_url("https://dev.elsevier.com/"))}
             config = load_config()
             api_key = config.get("elsevier_api_key")
             if not api_key:
@@ -363,6 +373,9 @@ async def api_channel_action(req: ChannelActionRequest):
         return {"success": False, "error": f"Unknown channel: {channel}"}
 
     result = await asyncio.to_thread(run)
+    if channel in {"webvpn", "carsi", "ezproxy"} and action in {"login", "test"}:
+        observed = {**result, "session_state": "unverified"} if channel == "carsi" else result
+        await asyncio.to_thread(record_check, channel, observed, config=action_config)
     if result.get("error_type") in {"needs_configuration", "not_applicable"}:
         status_code = 409
     else:
