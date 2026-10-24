@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; font: 13px/1.4 system-ui, sans-serif; }
+body { width: 300px; margin: 0; color: #202124; background: #fff; }
+header { display: flex; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #dadce0; }
+header span { color: #5f6368; }
+main { display: grid; gap: 9px; padding: 14px; }
+p { margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+label { color: #5f6368; }
+select, button { min-height: 34px; border: 1px solid #bdc1c6; border-radius: 6px; padding: 0 9px; font: inherit; }
+button { color: white; background: #1a73e8; border-color: #1a73e8; cursor: pointer; }
+button.secondary { color: #1a73e8; background: transparent; }
+button:disabled { opacity: .55; cursor: default; }
+@media (prefers-color-scheme: dark) { body { color: #e8eaed; background: #202124; } header { border-color: #5f6368; } header span, label { color: #bdc1c6; } }

@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "EgoLite Smoke Extension",
+  "version": "0.0.1",
+  "description": "A minimal unpacked extension used by the desktop smoke test.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

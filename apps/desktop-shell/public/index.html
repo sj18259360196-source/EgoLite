@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EgoLite</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="soft-glass.css">
+  <link rel="stylesheet" href="developer-tools.css">
+  <link rel="stylesheet" href="bookmark-library.css">
+  <link rel="stylesheet" href="translation.css">
+  <link rel="stylesheet" href="automation-settings.css">
+</head>
+<body>
+  <div class="titlebar">
+    <button id="workspace-quick-switch" class="wordmark workspace-quick-switch workspace-brand-switch" type="button" title="打开工作空间" aria-label="打开工作空间" aria-controls="workspace-sidebar" aria-expanded="false"><span class="wordmark-symbol">e</span><span class="workspace-quick-copy"><span>EgoLite</span><strong id="workspace-quick-name">正在加载</strong></span><i class="workspace-quick-chevron" data-lucide="panel-left-open"></i></button>
+    <div class="browser-tabs titlebar-tabs">
+      <div id="browser-tab-list" class="browser-tab-list"></div>
+      <button id="titlebar-new-tab" class="titlebar-new-tab" type="button" title="新建标签页（Ctrl+T）" aria-label="新建标签页"><i data-lucide="plus"></i></button>
+      <button id="manage-browser-tabs" class="titlebar-tab-manager" type="button" title="查看全部标签（Ctrl+Shift+A）" aria-label="查看全部标签" aria-controls="tab-overview" aria-expanded="false" aria-pressed="false"><i data-lucide="list-filter"></i><span id="titlebar-tab-count">0</span></button>
+    </div>
+    <div id="control-mode-switcher" class="control-mode-switcher" role="group" aria-label="全局控制模式">
+      <span class="control-mode-scope">全局</span>
+      <button type="button" data-control-mode="agent" aria-pressed="false" title="Agent 自主"><i data-lucide="bot"></i><span>Agent 自主</span></button>
+      <button type="button" data-control-mode="collaborative" aria-pressed="false" title="人机协同"><i data-lucide="users-round"></i><span>人机协同</span></button>
+      <button type="button" data-control-mode="manual" aria-pressed="false" title="人为干预"><i data-lucide="hand"></i><span>人为干预</span></button>
+      <span id="control-mode-status" class="control-mode-status" aria-live="polite">Agent 自主</span>
+    </div>
+    <button id="control-panel-open" class="titlebar-settings" type="button" title="工作区控制权" aria-label="工作区控制权"><i data-lucide="user-round-cog"></i></button>
+    <button id="titlebar-settings" class="titlebar-settings" type="button" title="设置" aria-label="设置" data-open-view="settings"><i data-lucide="settings"></i></button>
+  </div>
+  <section id="tab-overview" class="tab-overview" role="dialog" aria-modal="false" aria-label="全部标签" hidden>
+    <div class="tab-overview-head">
+      <div><strong>全部标签</strong><span id="tab-overview-summary">0 个标签</span></div>
+      <button id="tab-overview-close" class="icon-button" type="button" title="关闭标签速览"><i data-lucide="x"></i></button>
+    </div>
+    <div class="tab-overview-search" role="search"><i data-lucide="search"></i><input id="tab-overview-query" type="search" aria-label="搜索标签" placeholder="搜索标题、网址或工作空间" autocomplete="off"><button id="tab-overview-query-clear" type="button" title="清空搜索" aria-label="清空搜索"><i data-lucide="x"></i></button></div>
+    <div class="segmented tab-overview-filters" role="tablist" aria-label="标签筛选">
+      <button class="mode active" type="button" data-tab-overview-mode="all">全部</button>
+      <button class="mode" type="button" data-tab-overview-mode="recent">最近</button>
+      <button class="mode" type="button" data-tab-overview-mode="pinned">固定</button>
+      <button class="mode" type="button" data-tab-overview-mode="duplicates">重复</button>
+    </div>
+    <div id="tab-overview-list" class="tab-overview-list"></div>
+    <div class="tab-overview-footer"><span>Enter 切换，Delete 关闭</span><span class="tab-overview-footer-actions"><button id="tab-overview-close-duplicates" class="secondary-button" type="button" hidden><i data-lucide="copy-x"></i><span>清理重复项</span></button><button id="tab-overview-batch" class="secondary-button" type="button"><i data-lucide="list-checks"></i><span>批量管理</span></button></span></div>
+  </section>
+  <div id="recent-tab-switcher" class="recent-tab-switcher" aria-live="polite" hidden></div>
+  <button id="refresh" type="button" hidden aria-hidden="true"></button>
+  <nav class="legacy-navigation" hidden aria-hidden="true">
+    <div id="connection">正在连接</div>
+    <button id="titlebar-toggle-sidebar" type="button"></button>
+    <select id="active-task-select" aria-label="当前任务空间"></select>
+    <button id="titlebar-toggle-assistant" type="button"></button>
+    <button class="rail-button" data-view="start" type="button"></button>
+    <button class="rail-button" data-view="tasks" type="button"></button>
+    <button class="rail-button" data-view="library" type="button"></button>
+    <button class="rail-button" data-view="extensions" type="button"></button>
+    <button class="rail-button" data-view="settings" type="button"></button>
+  </nav>
+  <div class="app-shell sidebar-collapsed">
+    <aside id="workspace-sidebar" class="workspace-sidebar" aria-label="工作空间">
+      <div class="sidebar-heading"><strong>工作空间</strong><div class="sidebar-heading-actions"><button id="new-task" class="icon-button" type="button" title="新建工作空间" aria-label="新建工作空间"><i data-lucide="plus"></i></button><button id="sidebar-collapse" class="icon-button" type="button" title="收起工作空间" aria-label="收起工作空间"><i data-lucide="panel-left-close"></i></button></div></div>
+      <div id="task-list" class="task-list"></div>
+      <div class="sidebar-footer"><span class="status-dot"></span><span id="backend-label">托管 Edge</span></div>
+    </aside>
+    <main class="workspace">
+      <section id="start-view" class="view active">
+        <section class="browser-surface">
+          <div id="tab-batchbar" class="tab-batchbar" hidden>
+            <label><input id="tab-select-all" type="checkbox"><span id="tab-selection-count">选择全部</span></label>
+            <span class="tab-batch-spacer"></span>
+            <button id="tab-batch-pin" class="secondary-button" type="button" disabled><i data-lucide="pin"></i><span>固定</span></button>
+            <button id="tab-batch-mute" class="secondary-button" type="button" disabled><i data-lucide="volume-x"></i><span>静音</span></button>
+            <button id="tab-batch-close" class="secondary-button danger-button" type="button" disabled><i data-lucide="trash-2"></i><span>关闭</span></button>
+          </div>
+          <div class="browser-toolbar">
+            <button id="browser-back" class="icon-button" title="后退"><i data-lucide="arrow-left"></i></button>
+            <button id="browser-forward" class="icon-button" title="前进"><i data-lucide="arrow-right"></i></button>
+            <button id="browser-reload" class="icon-button" title="刷新"><i data-lucide="rotate-cw"></i></button>
+            <form id="browser-address-form" class="address-display">
+              <i data-lucide="globe-2"></i>
+              <input id="current-address" autocomplete="off" spellcheck="false" value="ego://start" aria-label="地址栏">
+              <button id="browser-translate" class="icon-button" type="button" title="翻译网页" aria-label="翻译网页"><i data-lucide="languages"></i></button>
+            </form>
+            <button id="save-page" class="icon-button" title="收藏当前地址（Ctrl+D）"><i data-lucide="star"></i></button>
+            <button id="browser-favorites" class="icon-button" type="button" title="收藏夹（Ctrl+Shift+O）" aria-label="收藏夹" aria-controls="favorites-panel" aria-expanded="false"><i data-lucide="list-tree"></i></button>
+            <button id="browser-passwords" class="icon-button badge-button" title="密码与自动填充" aria-controls="credentials-panel" aria-expanded="false"><i data-lucide="key-round"></i><span id="password-badge" hidden></span></button>
+            <div id="browser-extension-actions" class="browser-extension-actions" aria-label="已固定的扩展"></div>
+            <button id="browser-downloads" class="icon-button badge-button" title="下载"><i data-lucide="download"></i><span id="download-badge" hidden></span></button>
+            <button id="browser-history" class="icon-button" title="历史记录"><i data-lucide="history"></i></button>
+            <button id="browser-extensions" class="icon-button badge-button" title="扩展"><i data-lucide="puzzle"></i><span id="extension-badge" hidden></span></button>
+            <button id="browser-codex" class="icon-button codex-toolbar-button" type="button" data-agent-state="idle" title="Agent 空闲，点击查看活动" aria-label="Agent 空闲，点击查看活动"><i data-lucide="activity"></i></button>
+            <button id="browser-more" class="icon-button" title="设置及更多"><i data-lucide="ellipsis"></i></button>
+          </div>
+          <div id="favorites-bar" class="favorites-bar">
+            <button id="favorites-workspaces" class="favorites-workspaces" type="button" hidden aria-hidden="true"><i data-lucide="layers-3"></i><span>任务空间</span></button>
+            <div id="favorites-list" class="favorites-list"></div>
+            <button id="favorites-all" class="favorites-all" type="button"><span>其他收藏夹</span><i data-lucide="chevron-right"></i></button>
+          </div>
+          <div id="browser-more-menu" class="browser-more-menu" hidden>
+            <button id="browser-find" class="browser-menu-item" type="button"><i data-lucide="scan-search"></i><span>在页面中查找</span><kbd>Ctrl+F</kbd></button>
+            <div class="browser-menu-zoom">
+              <span>页面缩放</span>
+              <div>
+                <button id="browser-zoom-out" class="icon-button" type="button" title="缩小"><i data-lucide="minus"></i></button>
+                <button id="browser-zoom-reset" class="zoom-label" type="button" title="恢复 100%">100%</button>
+                <button id="browser-zoom-in" class="icon-button" type="button" title="放大"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+            <button id="browser-print" class="browser-menu-item" type="button"><i data-lucide="printer"></i><span>打印</span><kbd>Ctrl+P</kbd></button>
+            <div class="browser-menu-separator"></div>
+            <button id="browser-devtools" class="browser-menu-item" type="button"><i data-lucide="square-code"></i><span>开发者工具</span><kbd>F12</kbd></button>
+            <button id="browser-inspect" class="browser-menu-item" type="button"><i data-lucide="mouse-pointer-2"></i><span>检查元素</span><kbd>Ctrl+Shift+C</kbd></button>
+            <button id="browser-copy-element" class="browser-menu-item" type="button"><i data-lucide="clipboard-copy"></i><span>复制元素信息给 Agent</span><kbd></kbd></button>
+            <div class="browser-menu-separator"></div>
+            <button class="browser-menu-item" type="button" data-open-view="library"><i data-lucide="bookmark"></i><span>收藏夹</span><kbd></kbd></button>
+            <button class="browser-menu-item" type="button" data-open-view="extensions"><i data-lucide="puzzle"></i><span>扩展</span><kbd></kbd></button>
+            <button class="browser-menu-item" type="button" data-open-view="settings"><i data-lucide="settings"></i><span>设置</span><kbd></kbd></button>
+          </div>
+          <div id="find-bar" class="find-bar" hidden>
+            <input id="find-input" autocomplete="off" placeholder="在页面中查找">
+            <span id="find-result" class="find-result">0/0</span>
+            <button id="find-previous" class="icon-button" type="button" title="上一个"><i data-lucide="chevron-up"></i></button>
+            <button id="find-next" class="icon-button" type="button" title="下一个"><i data-lucide="chevron-down"></i></button>
+            <button id="find-close" class="icon-button" type="button" title="关闭查找"><i data-lucide="x"></i></button>
+          </div>
+          <div id="welcome" class="welcome">
+            <div class="new-tab-brand"><img class="ego-logo" src="assets/ego-start.png" alt="Ego"><span>EgoLite</span></div>
+            <h2>搜索网页，或交给本地 Agent 处理</h2>
+            <form id="omnibox-form" class="omnibox">
+              <i data-lucide="search"></i>
+              <input id="omnibox" autocomplete="off" placeholder="搜索网页或输入地址">
+              <button class="icon-button send-button" title="打开"><i data-lucide="arrow-right"></i></button>
+            </form>
+            <div class="new-tab-actions">
+              <button id="new-tab-codex" type="button"><i data-lucide="activity"></i><span>Agent 活动</span></button>
+              <button id="new-tab-import" type="button"><i data-lucide="import"></i><span>导入浏览器资料</span></button>
+              <button id="new-tab-extensions" type="button"><i data-lucide="puzzle"></i><span>管理扩展</span></button>
+            </div>
+            <p>浏览记录、收藏和 Agent 操作都保留在当前任务空间。</p>
+            <div id="recent-tabs" class="recent-tabs"></div>
+          </div>
+          <div id="webview-stack" class="webview-stack" hidden></div>
+          <aside id="devtools-pane" aria-label="开发者工具" hidden>
+            <div id="devtools-resizer" role="separator" tabindex="0" aria-label="调整开发者工具宽度" aria-orientation="vertical" aria-valuemin="280" aria-valuemax="900" aria-valuenow="480"></div>
+            <div class="devtools-toolbar">
+              <button id="devtools-pick" class="icon-button" type="button" title="选取页面元素（Ctrl+Shift+C）" aria-label="选取页面元素"><i data-lucide="mouse-pointer-2"></i></button>
+              <div class="devtools-modes" role="group" aria-label="检查面板">
+                <button type="button" data-devtools-panel="elements" aria-pressed="true"><i data-lucide="code-xml"></i><span>检查</span></button>
+                <button type="button" data-devtools-panel="sources" aria-pressed="false"><i data-lucide="file-code-2"></i><span>代码</span></button>
+              </div>
+              <span class="devtools-spacer"></span>
+              <button id="devtools-copy" class="icon-button" type="button" title="复制元素信息给 Agent（Ctrl+Shift+X）" aria-label="复制元素信息给 Agent"><i data-lucide="clipboard-copy"></i></button>
+              <button id="devtools-close" class="icon-button" type="button" title="关闭开发者工具（F12）" aria-label="关闭开发者工具"><i data-lucide="x"></i></button>
+            </div>
+            <div id="devtools-host"><span id="devtools-status" role="status">正在加载</span></div>
+          </aside>
+          <aside id="downloads-panel" class="downloads-panel" hidden>
+            <div class="downloads-head"><strong>下载内容</strong><div class="panel-head-actions"><button id="downloads-clear" class="secondary-button" type="button">清理已结束</button><button id="downloads-close" class="icon-button" type="button" title="关闭下载面板"><i data-lucide="x"></i></button></div></div>
+            <div class="downloads-filterbar">
+              <div class="downloads-search"><i data-lucide="search"></i><input id="downloads-search" autocomplete="off" placeholder="搜索下载"></div>
+              <select id="downloads-filter" class="compact-select" title="筛选下载状态"><option value="all">全部</option><option value="active">下载中</option><option value="completed">已完成</option><option value="failed">已取消或中断</option></select>
+            </div>
+            <div id="downloads-list" class="downloads-list"></div>
+          </aside>
+          <aside id="history-panel" class="history-panel" hidden>
+            <div class="history-head"><div class="segmented history-modes"><button class="mode active" type="button" data-history-mode="visits">访问历史</button><button class="mode" type="button" data-history-mode="closed">最近关闭</button></div><div class="panel-head-actions"><button id="history-clear" class="secondary-button" type="button">清空记录</button><button id="history-close" class="icon-button" type="button" title="关闭历史面板"><i data-lucide="x"></i></button></div></div>
+            <div class="history-search"><i data-lucide="search"></i><input id="history-search" autocomplete="off" placeholder="搜索标题或网址"></div>
+            <div id="history-list" class="history-list"></div>
+          </aside>
+          <aside id="extensions-panel" class="extensions-panel" hidden>
+            <div class="extensions-panel-head"><div><strong>扩展</strong><span id="extensions-panel-summary">正在读取</span></div><button id="extensions-panel-close" class="icon-button" type="button" title="关闭扩展面板"><i data-lucide="x"></i></button></div>
+            <div id="extensions-panel-list" class="extensions-panel-list"></div>
+            <button id="manage-extensions" class="extensions-manage-button" type="button"><i data-lucide="settings-2"></i><span>管理扩展</span></button>
+          </aside>
+          <aside id="credentials-panel" class="credentials-panel" hidden>
+            <div class="credentials-panel-head"><div><strong>登录信息</strong><span id="credentials-panel-summary">当前页面没有登录表单</span></div><button id="credentials-panel-close" class="icon-button" type="button" title="关闭密码面板"><i data-lucide="x"></i></button></div>
+            <div id="credentials-panel-list" class="credentials-panel-list"></div>
+            <div class="credentials-panel-actions">
+              <button id="save-current-credential" class="secondary-button" type="button"><i data-lucide="save"></i><span>保存当前输入</span></button>
+              <button id="manage-credentials" class="secondary-button" type="button"><i data-lucide="settings-2"></i><span>管理</span></button>
+            </div>
+          </aside>
+          <div id="crash-panel" class="crash-panel" hidden>
+            <i data-lucide="triangle-alert"></i>
+            <strong id="crash-title">页面停止运行</strong>
+            <span id="crash-message">可以重新加载页面，或关闭此标签。</span>
+            <div class="crash-actions"><button id="crash-close" class="secondary-button" type="button">关闭标签</button><button id="crash-reload" class="primary-button" type="button">重新加载</button></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tasks-view" class="view">
+        <header class="workspace-header"><div><div class="eyebrow">任务</div><h1>任务空间</h1></div></header>
+        <div class="task-toolbar">
+          <div class="search-field"><i data-lucide="search"></i><input id="task-search" autocomplete="off" placeholder="搜索任务空间"></div>
+          <label class="task-select-all"><input id="task-select-all" type="checkbox"><span id="task-selection-count">选择全部</span></label>
+          <span class="task-toolbar-spacer"></span>
+          <button id="save-workspace-snapshot" class="secondary-button" type="button"><i data-lucide="camera"></i><span>保存快照</span></button>
+          <button id="task-batch-close" class="secondary-button danger-button" type="button" disabled><i data-lucide="trash-2"></i><span>删除所选</span></button>
+        </div>
+        <section class="workspace-snapshots" aria-labelledby="workspace-snapshots-title">
+          <div class="workspace-snapshots-head"><div><div class="eyebrow">会话</div><h2 id="workspace-snapshots-title">工作空间快照</h2></div><span id="workspace-snapshot-count">0 个快照</span></div>
+          <div id="workspace-snapshot-list" class="workspace-snapshot-list"></div>
+        </section>
+        <div id="task-board" class="task-board"></div>
+      </section>
+
+      <section id="library-view" class="view">
+        <header class="workspace-header library-header"><div><div class="eyebrow">收藏库</div><div class="library-title-line"><h1>收藏内容</h1><span id="collection-result-count" class="library-result-count">0 项</span></div></div></header>
+        <div class="library-toolbar">
+          <div class="search-field"><i data-lucide="search"></i><input id="library-search" placeholder="搜索标题、网址或内容"></div>
+          <div class="library-filters">
+            <select id="collection-group-filter" class="compact-select" title="筛选分组"><option value="">全部分组</option></select>
+            <select id="collection-tag-filter" class="compact-select" title="筛选标签"><option value="">全部标签</option></select>
+            <select id="collection-sort" class="compact-select" title="排序方式"><option value="newest">最近保存</option><option value="oldest">最早保存</option><option value="title">按标题</option><option value="domain">按网站</option></select>
+          </div>
+          <div class="library-file-actions">
+            <button id="find-collection-duplicates" class="icon-button" type="button" title="整理重复项"><i data-lucide="copy-check"></i></button>
+            <button id="import-collections" class="icon-button" type="button" title="导入收藏文件"><i data-lucide="upload"></i></button>
+            <select id="collection-export-format" class="compact-select export-format-select" title="导出格式" aria-label="导出格式"><option value="markdown">Markdown</option><option value="json">JSON</option><option value="bookmarks-html">书签 HTML</option></select>
+            <button id="export-collections" class="icon-button" type="button" title="导出当前结果"><i data-lucide="download"></i></button>
+          </div>
+        </div>
+        <div class="collection-batchbar">
+          <label title="选择当前筛选结果"><input id="collection-select-all" type="checkbox"><span id="collection-selection-count">全选当前结果</span></label>
+          <span class="collection-batch-spacer"></span>
+          <div id="collection-batch-actions" class="collection-batch-actions" hidden>
+            <button id="collection-batch-move" class="secondary-button" type="button" disabled><i data-lucide="folder-input"></i><span>移动到分组</span></button>
+            <button id="collection-batch-delete" class="secondary-button danger-button" type="button" disabled><i data-lucide="trash-2"></i><span>删除</span></button>
+          </div>
+        </div>
+        <div id="collection-list" class="collection-list"></div>
+      </section>
+
+      <section id="extensions-view" class="view">
+        <header class="workspace-header">
+          <div><div class="eyebrow">扩展</div><h1>浏览器扩展</h1></div>
+          <div class="extension-install-actions">
+            <button id="open-extension-repository" class="secondary-button" type="button"><i data-lucide="store"></i><span>扩展仓库</span></button>
+            <button id="import-browser-extensions" class="secondary-button" type="button"><i data-lucide="import"></i><span>从浏览器导入</span></button>
+            <button id="install-browser-extension-dir" class="primary-button" type="button"><i data-lucide="folder-plus"></i><span>加载目录</span></button>
+            <button id="install-browser-extension-zip" class="secondary-button" type="button"><i data-lucide="file-archive"></i><span>安装 ZIP</span></button>
+          </div>
+        </header>
+        <p class="settings-note extension-note">支持本地已解压的 Chromium 扩展目录和 ZIP 扩展包，例如油猴、广告拦截器和开发中的扩展。CRX 文件仍需先转换为 ZIP 或解压目录。</p>
+        <div id="extension-list" class="extension-list"></div>
+      </section>
+
+      <section id="settings-view" class="view">
+        <header class="workspace-header"><div><div class="eyebrow">设置</div><h1>本地运行环境</h1></div></header>
+        <section id="cos-pack-settings" class="settings-section">
+          <div class="settings-section-head"><div><h2>CoS 组件</h2></div><div class="cos-pack-actions"><button data-cos-install hidden class="secondary-button" type="button"><i data-lucide="package-plus"></i><span>安装功能包</span></button><button data-cos-load hidden class="icon-button" type="button" title="载入功能包目录"><i data-lucide="folder-open"></i></button></div></div>
+          <div class="appearance-control">
+            <strong>Chat On Steroids</strong>
+            <label class="control-consent-toggle"><input data-cos-enabled type="checkbox"><span>启用</span></label>
+            <span data-cos-status role="status">未安装</span>
+            <button data-cos-download class="icon-button" type="button" title="下载并安装 CoS 预设包"><i data-lucide="download"></i></button>
+            <button data-cos-cancel-install class="icon-button" type="button" title="取消安装" hidden><i data-lucide="square"></i></button>
+            <button data-cos-open class="icon-button" type="button" title="打开 CoS 工作区" disabled><i data-lucide="panel-top"></i></button>
+            <button data-cos-resume class="icon-button" type="button" title="继续已保存的任务" hidden><i data-lucide="play"></i></button>
+            <button data-cos-check class="icon-button" type="button" title="检查 CoS 更新"><i data-lucide="refresh-cw"></i></button>
+            <button data-cos-update class="icon-button" type="button" title="交给 Codex 更新 CoS" disabled><i data-lucide="bot"></i></button>
+            <button data-cos-cancel-update class="icon-button" type="button" title="停止更新任务" hidden><i data-lucide="square"></i></button>
+            <button data-cos-apply-update class="icon-button" type="button" title="应用候选版本" hidden><i data-lucide="package-check"></i></button>
+            <button data-cos-rollback class="icon-button" type="button" title="恢复更新前的程序和数据" disabled><i data-lucide="rotate-ccw"></i></button>
+          </div>
+          <p data-cos-path class="settings-note" style="overflow-wrap:anywhere"></p>
+          <p data-cos-maintenance class="settings-note" role="status" style="overflow-wrap:anywhere"></p>
+        </section>
+        <nav class="settings-navigation" aria-label="EgoLite 功能入口">
+          <button class="settings-navigation-item" type="button" data-open-view="start"><i data-lucide="globe-2"></i><span><strong>浏览器</strong><small>返回当前浏览任务</small></span><i data-lucide="chevron-right"></i></button>
+          <button class="settings-navigation-item" type="button" data-open-view="tasks"><i data-lucide="layers-3"></i><span><strong>任务空间</strong><small>管理任务与工作空间快照</small></span><i data-lucide="chevron-right"></i></button>
+          <button class="settings-navigation-item" type="button" data-open-view="library"><i data-lucide="bookmark"></i><span><strong>收藏库</strong><small>查看收藏内容与分组</small></span><i data-lucide="chevron-right"></i></button>
+          <button class="settings-navigation-item" type="button" data-open-view="extensions"><i data-lucide="puzzle"></i><span><strong>扩展</strong><small>管理浏览器扩展</small></span><i data-lucide="chevron-right"></i></button>
+          <button class="settings-navigation-item" type="button" data-open-view="agent-settings"><i data-lucide="bot"></i><span><strong>Agent</strong><small>网页访问、下载与控制权</small></span><i data-lucide="chevron-right"></i></button>
+          <button class="settings-navigation-item" type="button" data-open-view="scansci-settings"><i data-lucide="book-open-check"></i><span><strong>ScanSci PDF</strong><small>文献通道与下载设置</small></span><i data-lucide="chevron-right"></i></button>
+        </nav>
+        <div class="settings-grid">
+          <div><span>浏览器后端</span><strong id="settings-backend">托管 Edge</strong></div>
+          <div><span>Agent 接入</span><strong id="settings-agent-summary">正在检查</strong></div>
+          <div><span>快捷栏</span><strong id="settings-homebar">Ctrl+Shift+Space</strong></div>
+          <div><span>系统托盘</span><strong id="settings-tray">已就绪</strong></div>
+          <div><span>浏览器数据</span><button id="import-browser-data" class="secondary-button" type="button">导入</button></div>
+          <div><span>网站权限</span><strong id="settings-permission-count">0 条决定</strong></div>
+          <div><span>已保存密码</span><strong id="settings-credential-count">0 条</strong></div>
+        </div>
+        <section class="settings-section profile-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">身份隔离</div><h2>浏览器 Profiles</h2></div><button id="create-browser-profile" class="secondary-button" type="button"><i data-lucide="user-round-plus"></i><span>新建 Profile</span></button></div>
+          <div id="browser-profile-list" class="browser-profile-list"></div>
+          <p class="settings-note">每个 Profile 使用独立的 Cookie、缓存、登录状态和扩展存储。默认 Profile 保留升级前的数据。</p>
+        </section>
+        <section class="settings-section">
+          <div class="settings-section-head"><div><div class="eyebrow">浏览器连接</div><h2>浏览器模式</h2></div></div>
+          <div class="browser-mode-control">
+            <label for="browser-backend-select">控制方式</label>
+            <select id="browser-backend-select" class="compact-select">
+              <option value="desktop">Ego 内置浏览器</option>
+              <option value="companion">复用 Edge / Chrome 登录状态</option>
+            </select>
+            <button id="apply-browser-backend" class="secondary-button" type="button">切换并重启</button>
+          </div>
+          <p id="browser-backend-help" class="settings-note"></p>
+          <div class="companion-status">
+            <div class="companion-status-copy"><strong>Companion</strong><span id="companion-status-text">正在检查本机组件</span></div>
+            <div class="companion-status-actions">
+              <button id="refresh-companion-status" class="icon-button" type="button" title="重新检查 Companion 状态"><i data-lucide="refresh-cw"></i></button>
+              <button id="install-companion" class="secondary-button" type="button">安装 Companion</button>
+            </div>
+          </div>
+          <p class="settings-note">安装后，请在 Edge 或 Chrome 的扩展页面加载 Ego Windows Companion，并在目标标签页内明确授权。EgoLite 不会读取或导出原始 Cookie。</p>
+        </section>
+        <section class="settings-section appearance-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">外观</div><h2>主题与背景</h2></div></div>
+          <div class="appearance-control">
+            <label for="theme-select">主题</label>
+            <select id="theme-select" class="compact-select">
+              <option value="night">夜景湖畔</option>
+              <option value="slate">冷雾灰蓝</option>
+              <option value="ember">暖棕暮色</option>
+              <option value="light">浅色海岸</option>
+              <option value="paper">纯白极简</option>
+            </select>
+          </div>
+          <div class="appearance-control">
+            <label for="glass-opacity">玻璃透明度</label>
+            <div class="appearance-range"><input id="glass-opacity" type="range" min="60" max="140" step="5"><output id="glass-opacity-value">100%</output></div>
+          </div>
+          <div class="appearance-control">
+            <label for="glass-blur">玻璃模糊</label>
+            <div class="appearance-range"><input id="glass-blur" type="range" min="8" max="36" step="2"><output id="glass-blur-value">24px</output></div>
+          </div>
+          <div class="appearance-control">
+            <label for="background-dim">背景暗度</label>
+            <div class="appearance-range"><input id="background-dim" type="range" min="45" max="85" step="5"><output id="background-dim-value">66%</output></div>
+          </div>
+          <div class="appearance-control appearance-background-control">
+            <label for="background-url">背景图片</label>
+            <div class="appearance-background-input">
+              <input id="background-url" class="text-input" type="url" autocomplete="off" placeholder="粘贴图片 URL，或选择本地图片">
+              <button id="choose-background" class="secondary-button" type="button"><i data-lucide="image-plus"></i><span>选择图片</span></button>
+              <button id="reset-background" class="icon-button" type="button" title="恢复默认背景"><i data-lucide="rotate-ccw"></i></button>
+              <input id="background-file" type="file" accept="image/*" hidden>
+            </div>
+          </div>
+          <p id="appearance-status" class="settings-note">主题和背景只保存在这台电脑上。</p>
+        </section>
+        <section class="settings-section tab-behavior-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">标签页</div><h2>性能与打开方式</h2></div></div>
+          <div class="appearance-control">
+            <label for="auto-sleep-minutes">自动休眠</label>
+            <select id="auto-sleep-minutes" class="compact-select">
+              <option value="0">关闭</option>
+              <option value="15">15 分钟</option>
+              <option value="30">30 分钟</option>
+              <option value="60">1 小时</option>
+              <option value="120">2 小时</option>
+            </select>
+          </div>
+          <div class="appearance-control">
+            <label for="duplicate-open-behavior">重复页面</label>
+            <select id="duplicate-open-behavior" class="compact-select">
+              <option value="reuse">切换到已打开标签</option>
+              <option value="allow">始终新建标签</option>
+            </select>
+          </div>
+          <div class="appearance-control tab-site-exceptions">
+            <label for="never-sleep-sites">保持唤醒</label>
+            <input id="never-sleep-sites" class="text-input" type="text" autocomplete="off" placeholder="例如 music.example.com, docs.example.com">
+          </div>
+          <p id="tab-behavior-status" class="settings-note">固定标签、播放媒体和改动过表单的页面不会自动休眠。</p>
+        </section>
+        <section class="settings-section resource-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">资源</div><h2>内存管理</h2></div><button id="release-idle-memory" class="secondary-button" type="button"><i data-lucide="leaf"></i><span>释放闲置内存</span></button></div>
+          <div class="resource-summary">
+            <div><span>标签内存</span><strong id="resource-memory-total">正在读取</strong></div>
+            <div><span>运行标签</span><strong id="resource-awake-tabs">0</strong></div>
+            <div><span>休眠标签</span><strong id="resource-sleeping-tabs">0</strong></div>
+          </div>
+          <div class="appearance-control">
+            <label for="resource-policy">自动调节</label>
+            <select id="resource-policy" class="compact-select">
+              <option value="balanced">平衡</option>
+              <option value="saving">节省内存</option>
+              <option value="performance">优先性能</option>
+              <option value="off">关闭</option>
+            </select>
+          </div>
+          <div id="resource-heavy-tabs" class="resource-heavy-tabs"></div>
+          <p id="resource-status" class="settings-note">正在读取 Chromium 标签进程占用。</p>
+        </section>
+        <section id="credential-settings" class="settings-section credential-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">登录</div><h2>密码与自动填充</h2></div><button id="clear-saved-credentials" class="secondary-button" type="button">清空当前 Profile</button></div>
+          <div class="appearance-control credential-autofill-control">
+            <label for="password-autofill-enabled">自动填充</label>
+            <label class="control-consent-toggle"><input id="password-autofill-enabled" type="checkbox" checked><span id="password-autofill-label">已开启</span></label>
+          </div>
+          <div class="appearance-control">
+            <label for="credential-profile-filter">Profile</label>
+            <select id="credential-profile-filter" class="compact-select"></select>
+          </div>
+          <div id="credential-settings-list" class="credential-settings-list"></div>
+          <p id="credential-settings-status" class="settings-note">登录信息按浏览器 Profile 分开保存。</p>
+        </section>
+        <section class="settings-section">
+          <div class="settings-section-head"><div><div class="eyebrow">隐私</div><h2>网站权限</h2></div><button id="clear-site-permissions" class="secondary-button" type="button">全部重置</button></div>
+          <div id="site-permissions-list" class="site-permissions-list"></div>
+        </section>
+      </section>
+
+      <section id="scansci-settings-view" class="view scansci-settings-view">
+        <header class="workspace-header scansci-settings-header">
+          <div><div class="eyebrow">设置</div><h1>ScanSci PDF</h1></div>
+          <div class="scansci-header-actions">
+            <button id="scansci-refresh" class="secondary-button" type="button"><i data-lucide="refresh-cw"></i><span>检查全部通道</span></button>
+            <button id="scansci-restart" class="icon-button" type="button" title="重启 ScanSci 服务"><i data-lucide="rotate-ccw"></i></button>
+            <button id="scansci-stop" class="icon-button" type="button" title="停止 ScanSci 服务"><i data-lucide="square"></i></button>
+            <button class="secondary-button" type="button" data-open-view="settings"><i data-lucide="arrow-left"></i><span>返回设置</span></button>
+          </div>
+        </header>
+        <div class="scansci-service-summary" aria-live="polite">
+          <div><span>服务</span><strong id="scansci-service-state">等待启动</strong></div>
+          <div><span>通道检查</span><strong id="scansci-channel-state">尚未运行</strong></div>
+          <div><span>运行方式</span><strong id="scansci-owner-state">EgoLite 托管</strong></div>
+          <div><span>项目目录</span><strong id="scansci-project-path">A:\Project\ScanSci PDF</strong></div>
+        </div>
+        <div id="scansci-service-error" class="scansci-service-error" role="alert" hidden></div>
+        <div class="scansci-console-shell">
+          <div id="scansci-loading" class="scansci-loading">
+            <i data-lucide="loader-circle"></i>
+            <strong>正在启动 ScanSci PDF</strong>
+            <span>服务就绪后会立即检查全部下载通道</span>
+          </div>
+          <webview id="scansci-settings-webview" partition="persist:ego-desktop" title="ScanSci PDF 设置" hidden></webview>
+        </div>
+      </section>
+
+      <section id="agent-settings-view" class="view">
+        <header class="workspace-header agent-settings-header">
+          <div><div class="eyebrow">设置</div><h1>Agent</h1></div>
+          <button class="secondary-button" type="button" data-open-view="settings"><i data-lucide="arrow-left"></i><span>返回设置</span></button>
+        </header>
+        <section class="settings-section agent-policy-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">能力</div><h2>网页访问与下载</h2></div></div>
+          <div class="appearance-control agent-setting-control">
+            <label for="agent-web-access-enabled">Web Access</label>
+            <div class="control-consent-fields">
+              <label class="control-consent-toggle"><input id="agent-web-access-enabled" type="checkbox"><span id="agent-web-access-label">已开启</span></label>
+            </div>
+          </div>
+          <div class="appearance-control agent-setting-control">
+            <label for="agent-silent-downloads-enabled">静默下载</label>
+            <div class="control-consent-fields">
+              <label class="control-consent-toggle"><input id="agent-silent-downloads-enabled" type="checkbox"><span id="agent-silent-downloads-label">已开启</span></label>
+            </div>
+          </div>
+          <p id="agent-policy-status" class="settings-note">Web Access 为 Agent 提供联网路由与验证规则。静默下载会把 Agent 发起且未指定路径的文件保存到系统下载目录。</p>
+          <p class="settings-note agent-download-path">下载目录 <span id="agent-download-directory">正在读取</span></p>
+        </section>
+        <section id="automation-settings" class="settings-section">
+          <div class="settings-section-head"><div><div class="eyebrow">当前 Profile <span data-profile></span></div><h2>自动化加速</h2></div><button data-refresh class="icon-button" type="button" title="刷新状态" aria-label="刷新状态"><i data-lucide="refresh-cw"></i></button></div>
+          <form autocomplete="off">
+            <label>执行模式<select data-mode><option value="auto">自动</option><option value="off">关闭</option></select></label>
+            <label>Jev 模型<input data-model value="jev-1.13.0" required pattern="jev-[0-9]+\.[0-9]+\.[0-9]+"></label>
+            <label class="automation-wide">TypeSafe API Key<input data-key type="password" autocomplete="new-password" spellcheck="false"></label>
+            <label class="automation-wide">限定站点<input data-origins placeholder="https://example.com, https://example.org" spellcheck="false"></label>
+            <label class="automation-check automation-wide"><input data-consent type="checkbox"><span>允许把当前任务所需的页面文本发送给 TypeSafe，按 API 用量计费；站点留空时适用于当前 Profile 的所有网站</span></label>
+            <label class="automation-check automation-wide"><input data-memory type="checkbox"><span>密钥仅本次使用</span></label>
+            <div class="automation-actions automation-wide">
+              <button type="submit" class="secondary-button"><i data-lucide="save"></i><span>保存</span></button>
+              <button data-test type="button" class="secondary-button"><i data-lucide="plug-zap"></i><span>测试连接（2 次付费请求）</span></button>
+              <button data-clear type="button" class="icon-button" title="删除密钥" aria-label="删除密钥"><i data-lucide="trash-2"></i></button>
+            </div>
+          </form>
+          <p data-status class="settings-note" role="status" aria-live="polite"></p>
+          <div data-jobs></div>
+        </section>
+        <section class="settings-section agent-integration-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">本机连接</div><h2>本地 Agent</h2></div><button id="repair-agent-integrations" class="secondary-button" type="button"><i data-lucide="wrench"></i><span>修复连接</span></button></div>
+          <div id="agent-integration-list" class="agent-integration-list"></div>
+          <p id="agent-integration-status" class="settings-note">EgoLite 会为本机 Codex、Claude、Cursor 和通用 Agent 同步已开启的 Skill 与 MCP 连接。</p>
+        </section>
+        <section class="settings-section control-security-settings">
+          <div class="settings-section-head"><div><div class="eyebrow">安全</div><h2>控制权交接</h2></div></div>
+          <div class="appearance-control control-consent-control">
+            <label for="control-handoff-enabled">功能状态</label>
+            <div class="control-consent-fields">
+              <label class="control-consent-toggle"><input id="control-handoff-enabled" type="checkbox"><span id="control-handoff-label">已关闭</span></label>
+            </div>
+          </div>
+          <div class="appearance-control control-consent-control">
+            <label for="control-consent-enabled">归还授权</label>
+            <div class="control-consent-fields">
+              <label class="control-consent-toggle"><input id="control-consent-enabled" type="checkbox" disabled><span id="control-consent-label">自动归还</span></label>
+              <select id="control-consent-level" class="compact-select" aria-label="归还授权级别" disabled>
+                <option value="balanced">标准</option>
+                <option value="strict">严格</option>
+              </select>
+            </div>
+          </div>
+          <p id="control-consent-status" class="settings-note">控制权交接已关闭。Agent 活动只显示状态和操作记录。</p>
+        </section>
+      </section>
+    </main>
+
+    <div id="assistant-resizer" class="assistant-resizer" role="separator" aria-label="调整 Agent 活动侧栏宽度" aria-orientation="vertical"></div>
+    <aside class="assistant-panel">
+      <div class="assistant-head"><div class="assistant-title"><i data-lucide="activity"></i><strong>Agent 活动</strong><button class="mode active" data-mode="operations" hidden>记录</button></div><div class="assistant-head-actions"><button id="agent-hud-takeover" class="icon-button assistant-agent-control" type="button" hidden title="接管当前任务"><i data-lucide="hand"></i><span>接管</span></button><button id="agent-hud-stop" class="icon-button assistant-agent-control danger-icon" type="button" hidden title="停止 Agent"><i data-lucide="square"></i><span>停止</span></button><button id="agent-hud-return" class="icon-button assistant-agent-control" type="button" hidden title="归还控制权"><i data-lucide="corner-up-left"></i><span>归还控制权</span></button><button id="assistant-attach-page" class="icon-button" type="button" hidden title="已停用"><i data-lucide="scan-text"></i></button><button id="clear-chat" class="icon-button" title="清空操作记录"><i data-lucide="trash-2"></i></button><button id="assistant-collapse" class="icon-button" type="button" title="收起 Agent 活动"><i data-lucide="panel-right-close"></i></button></div></div>
+      <div class="assistant-context"><span id="assistant-task-label">尚未选择任务</span><span class="assistant-context-actions assistant-modes"><span id="operation-live-status" class="operation-live-status">Agent 空闲</span></span></div>
+      <div id="operation-toolbar" class="operation-toolbar" hidden>
+        <div class="operation-search"><i data-lucide="search"></i><input id="operation-search" autocomplete="off" placeholder="搜索操作记录"></div>
+        <select id="operation-status-filter" class="compact-select" aria-label="筛选操作状态"><option value="all">全部状态</option><option value="running">执行中</option><option value="completed">已完成</option><option value="failed">失败</option></select>
+        <span id="operation-filter-count" class="operation-filter-count">0 项</span>
+      </div>
+      <div id="messages" class="messages"><div class="assistant-empty"><div class="mini-mark"><i data-lucide="inbox"></i></div><strong>暂无操作记录</strong><span>从本机 Agent 发起任务后，操作会显示在这里。</span></div></div>
+      <div id="context-strip" class="context-strip" aria-live="polite" hidden></div>
+      <div class="composer-wrap" hidden>
+        <div id="context-picker" class="context-picker" hidden>
+          <div class="context-picker-head">
+            <div class="context-source-tabs" role="tablist" aria-label="上下文来源">
+              <button class="context-source-tab active" type="button" data-source="tabs" role="tab">标签页</button>
+              <button class="context-source-tab" type="button" data-source="collections" role="tab">收藏内容</button>
+            </div>
+            <button id="attach-current-tab" class="icon-button" type="button" title="附加当前标签"><i data-lucide="scan-text"></i></button>
+          </div>
+          <div class="context-search">
+            <i data-lucide="search"></i>
+            <input id="context-search" autocomplete="off" placeholder="搜索标签、分组或收藏">
+          </div>
+          <div id="context-source-list" class="context-source-list"></div>
+        </div>
+        <div id="attachment-menu" class="attachment-menu" hidden>
+          <button type="button" data-attachment-action="files"><i data-lucide="file-plus-2"></i><span>选择文件</span></button>
+          <button type="button" data-attachment-action="page"><i data-lucide="camera"></i><span>当前页面截图</span></button>
+          <button type="button" data-attachment-action="clipboard"><i data-lucide="clipboard-paste"></i><span>粘贴图片</span></button>
+        </div>
+        <div class="composer">
+        <textarea id="prompt" rows="3" placeholder="让 Codex 阅读、整理或操作当前页面，使用 @ 添加上下文"></textarea>
+        <div class="composer-row">
+          <button id="attach-tab" class="icon-button" type="button" title="选择上下文" aria-expanded="false"><i data-lucide="paperclip"></i></button>
+          <button id="add-attachment" class="icon-button" type="button" title="添加文件或截图" aria-expanded="false"><i data-lucide="plus"></i></button>
+          <span id="compose-status"></span>
+          <button id="send-message" class="icon-button send-button" title="发送"><i data-lucide="arrow-up"></i></button>
+        </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <dialog id="task-dialog">
+    <form method="dialog" id="task-form">
+      <div class="dialog-head"><strong>新建任务空间</strong><button id="task-dialog-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>名称<input id="task-name" required maxlength="80" placeholder="例如：产品调研"></label>
+      <label>浏览器 Profile<select id="task-profile" class="compact-select"></select></label>
+      <p class="dialog-copy">工作空间会使用所选 Profile 的登录状态和扩展数据。</p>
+      <div class="dialog-actions"><button id="task-dialog-cancel" type="button" class="secondary-button">取消</button><button id="create-task" value="default" class="primary-button">创建</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="browser-profile-dialog">
+    <form id="browser-profile-form">
+      <div class="dialog-head"><strong id="browser-profile-dialog-title">新建浏览器 Profile</strong><button id="browser-profile-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>名称<input id="browser-profile-name" required maxlength="80" placeholder="例如：工作、个人、测试"></label>
+      <fieldset class="profile-color-field"><legend>识别颜色</legend><div id="browser-profile-colors" class="profile-color-options"></div></fieldset>
+      <p class="dialog-copy">创建后会获得独立的浏览器数据目录。Profile 标识和数据目录不会随改名变化。</p>
+      <div class="dialog-actions"><button id="browser-profile-cancel" type="button" class="secondary-button">取消</button><button class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="extension-import-dialog" class="onboarding-dialog extension-import-dialog">
+    <div class="onboarding-content">
+      <div class="dialog-head"><div><div class="eyebrow">选择性迁移</div><strong>从浏览器导入扩展</strong></div><button id="extension-import-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <p class="onboarding-copy">只复制你选中的扩展文件。不会迁移 Cookie、登录状态、密码或浏览器配置。</p>
+      <div id="browser-extension-import-list" class="browser-import-sources"></div>
+      <label class="import-extension-enable"><input id="import-extension-enable" type="checkbox" checked><span>导入后立即启用</span></label>
+      <div id="browser-extension-import-status" class="browser-import-status" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="extension-import-cancel" type="button" class="secondary-button">取消</button><button id="extension-import-run" type="button" class="primary-button">导入所选</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="extension-repository-dialog" class="onboarding-dialog extension-repository-dialog">
+    <div class="onboarding-content">
+      <div class="dialog-head"><div><div class="eyebrow">精选扩展</div><strong>扩展仓库</strong></div><button id="extension-repository-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <p class="onboarding-copy">安装前查看版本和权限。仓库扩展只接受 HTTPS 来源，安装后仍可单独停用或移除。</p>
+      <div id="extension-repository-list" class="extension-repository-list"></div>
+      <div id="extension-repository-status" class="browser-import-status" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="extension-repository-cancel" type="button" class="secondary-button">关闭</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="task-rename-dialog">
+    <form id="task-rename-form">
+      <div class="dialog-head"><strong>重命名任务空间</strong><button id="task-rename-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>名称<input id="task-rename-name" required maxlength="80" placeholder="任务空间名称"></label>
+      <div class="dialog-actions"><button id="task-rename-cancel" type="button" class="secondary-button">取消</button><button class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="workspace-snapshot-dialog">
+    <form id="workspace-snapshot-form">
+      <div class="dialog-head"><strong>保存工作空间快照</strong><button id="workspace-snapshot-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>名称<input id="workspace-snapshot-name" required maxlength="80" placeholder="例如：周五调研现场"></label>
+      <p class="dialog-copy">快照会保存当前标签、标签组、固定和休眠状态。恢复时会创建新的工作空间。</p>
+      <div class="dialog-actions"><button id="workspace-snapshot-cancel" type="button" class="secondary-button">取消</button><button class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <div id="tab-context-menu" class="tab-context-menu" hidden>
+    <button type="button" data-tab-action="duplicate" data-tab-scope="tab"><i data-lucide="copy-plus"></i><span>复制标签</span></button>
+    <button type="button" data-tab-action="pin" data-tab-scope="tab"><i data-lucide="pin"></i><span>固定标签</span></button>
+    <button type="button" data-tab-action="mute" data-tab-scope="tab"><i data-lucide="volume-x"></i><span>静音标签</span></button>
+    <button type="button" data-tab-action="sleep" data-tab-scope="tab"><i data-lucide="moon"></i><span>休眠标签</span></button>
+    <button type="button" data-tab-action="group" data-tab-scope="tab"><i data-lucide="panels-top-left"></i><span>添加到标签组</span></button>
+    <button type="button" data-tab-action="ungroup" data-tab-scope="tab" hidden><i data-lucide="ungroup"></i><span>移出标签组</span></button>
+    <button type="button" data-tab-action="group-collapse" data-tab-scope="group" hidden><i data-lucide="chevrons-left-right"></i><span>折叠标签组</span></button>
+    <button type="button" data-tab-action="group-sleep" data-tab-scope="group" hidden><i data-lucide="moon-star"></i><span>休眠标签组</span></button>
+    <button type="button" data-tab-action="group-close" data-tab-scope="group" hidden><i data-lucide="panel-top-close"></i><span>关闭标签组</span></button>
+    <div class="menu-separator"></div>
+    <button type="button" data-tab-action="close-others" data-tab-scope="tab"><i data-lucide="panels-top-left"></i><span>关闭其他标签</span></button>
+    <button type="button" data-tab-action="close-right" data-tab-scope="tab"><i data-lucide="panel-right"></i><span>关闭右侧标签</span></button>
+    <button type="button" data-tab-action="close" data-tab-scope="tab"><i data-lucide="x"></i><span>关闭标签</span></button>
+  </div>
+
+  <div id="tab-hover-preview" class="tab-hover-preview" hidden>
+    <div class="tab-hover-preview-media"><img alt="" hidden><div class="tab-hover-preview-placeholder"><i data-lucide="panel-top"></i></div></div>
+    <div class="tab-hover-preview-copy"><strong></strong><span class="tab-hover-preview-url"></span><span class="tab-hover-preview-meta"></span></div>
+  </div>
+
+  <dialog id="tab-group-dialog" class="tab-group-dialog">
+    <form id="tab-group-form">
+      <div class="dialog-head"><strong>标签组</strong><button id="tab-group-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>使用现有标签组<select id="tab-group-existing" class="compact-select"><option value="">新建标签组</option></select></label>
+      <label>名称<input id="tab-group-name" maxlength="48" placeholder="例如：资料、购物、稍后处理"></label>
+      <fieldset class="tab-group-colors"><legend>颜色</legend><div id="tab-group-color-options"></div></fieldset>
+      <div class="dialog-actions"><button id="tab-group-cancel" type="button" class="secondary-button">取消</button><button class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="onboarding-dialog" class="onboarding-dialog">
+    <div class="onboarding-content">
+      <div class="dialog-head">
+        <div><div class="eyebrow">欢迎使用 EGO</div><strong id="onboarding-title">导入浏览器资料</strong></div>
+        <button id="onboarding-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <p id="onboarding-copy" class="onboarding-copy">选择要加入收藏库的浏览器资料。原浏览器数据保持不变。</p>
+      <div id="browser-import-sources" class="browser-import-sources"></div>
+      <div class="import-options">
+        <label><input id="import-bookmarks" type="checkbox" checked><span>书签</span></label>
+        <label><input id="import-history" type="checkbox" checked><span>历史记录</span></label>
+        <label class="history-limit"><span>最近记录数</span><select id="import-history-limit"><option value="100">100</option><option value="500" selected>500</option><option value="1000">1000</option><option value="2000">2000</option></select></label>
+      </div>
+      <div id="browser-import-status" class="browser-import-status" aria-live="polite"></div>
+      <div class="dialog-actions">
+        <button id="onboarding-skip" type="button" class="secondary-button">跳过</button>
+        <button id="onboarding-import" type="button" class="primary-button">导入并继续</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="collection-group-dialog" class="collection-group-dialog">
+    <form id="collection-group-form">
+      <div class="dialog-head"><div><div class="eyebrow">COLLECTION</div><strong>移动到分组</strong></div><button id="collection-group-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>分组名称<input id="collection-group-name" maxlength="120" placeholder="留空表示未分组"></label>
+      <div id="collection-group-suggestions" class="collection-group-suggestions"></div>
+      <div class="dialog-actions"><button id="collection-group-clear" type="button" class="secondary-button">移出分组</button><button class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="collection-edit-dialog" class="collection-edit-dialog">
+    <form id="collection-edit-form">
+      <div class="dialog-head"><div><div class="eyebrow">COLLECTION</div><strong>编辑收藏内容</strong></div><button id="collection-edit-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <label>标题<input id="collection-edit-title" maxlength="2000" placeholder="收藏标题"></label>
+      <label>标签<input id="collection-edit-tags" maxlength="600" placeholder="用逗号分隔，例如：研究, Windows"></label>
+      <label>正文<textarea id="collection-edit-text" maxlength="20000" rows="8" required></textarea></label>
+      <div class="dialog-actions"><button id="collection-edit-cancel" type="button" class="secondary-button">取消</button><button class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="collection-duplicates-dialog" class="collection-duplicates-dialog">
+    <form id="collection-duplicates-form">
+      <div class="dialog-head"><div><div class="eyebrow">COLLECTION</div><strong>合并重复收藏</strong></div><button id="collection-duplicates-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <p id="collection-duplicates-summary" class="dialog-copy"></p>
+      <div id="collection-duplicates-list" class="collection-duplicates-list"></div>
+      <div class="dialog-actions"><button id="collection-duplicates-cancel" type="button" class="secondary-button">取消</button><button id="collection-duplicates-merge" class="primary-button">合并所选</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="browser-prompt-dialog" class="browser-prompt-dialog">
+    <form id="browser-prompt-form">
+      <div class="dialog-head"><div><div id="browser-prompt-kind" class="eyebrow">网站请求</div><strong id="browser-prompt-title">网站请求</strong></div><button id="browser-prompt-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <p id="browser-prompt-message" class="browser-prompt-message"></p>
+      <div id="browser-auth-fields" class="browser-auth-fields" hidden>
+        <label id="browser-auth-credential-row" hidden>已保存账号<select id="browser-auth-credential"></select></label>
+        <label>用户名<input id="browser-auth-username" autocomplete="username"></label>
+        <label>密码<input id="browser-auth-password" type="password" autocomplete="current-password"></label>
+      </div>
+      <label id="browser-prompt-remember-row" class="browser-prompt-remember"><input id="browser-prompt-remember" type="checkbox" checked><span>记住此网站的选择</span></label>
+      <div class="dialog-actions"><button id="browser-prompt-deny" type="button" class="secondary-button">拒绝</button><button id="browser-prompt-allow" class="primary-button">允许</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="credential-save-dialog" class="credential-save-dialog">
+    <form id="credential-save-form">
+      <div class="dialog-head"><div><div class="eyebrow">登录信息</div><strong id="credential-save-title">保存密码</strong></div><button id="credential-save-close" type="button" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <p id="credential-save-origin" class="dialog-copy"></p>
+      <label>用户名<input id="credential-save-username" autocomplete="username"></label>
+      <label>密码<input id="credential-save-password" type="password" autocomplete="current-password" required></label>
+      <label class="credential-password-visible"><input id="credential-password-visible" type="checkbox"><span>显示密码</span></label>
+      <p id="credential-save-profile" class="dialog-copy"></p>
+      <div class="dialog-actions"><button id="credential-save-cancel" type="button" class="secondary-button">取消</button><button id="credential-save-accept" class="primary-button">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="confirm-dialog">
+    <form method="dialog" id="confirm-form">
+      <div class="dialog-head"><div><div class="eyebrow">请确认</div><strong id="confirm-title">确认操作</strong></div><button value="cancel" class="icon-button" title="关闭"><i data-lucide="x"></i></button></div>
+      <p id="confirm-message"></p>
+      <div class="dialog-actions"><button value="cancel" class="secondary-button">取消</button><button id="confirm-accept" value="default" class="primary-button danger-confirm">确认</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="control-panel">
+    <div class="dialog-head"><strong id="control-panel-title">工作区控制权</strong><button id="control-panel-close" class="secondary-button" type="button">关闭</button></div>
+    <p id="control-panel-mode" class="dialog-copy"></p>
+    <p id="control-panel-status" aria-live="polite"></p>
+    <div id="control-panel-agents"></div>
+    <label for="control-panel-target">交给 Agent</label>
+    <select id="control-panel-target"></select>
+    <button id="control-panel-assign" type="button" class="primary-button">批准控制权</button>
+    <p id="control-panel-reason" class="dialog-copy" aria-live="polite"></p>
+    <h3>控制权申请</h3>
+    <div id="control-panel-requests"></div>
+    <label><input id="control-auto-collaboration" type="checkbox">全局检测页面操作并暂停 Agent</label>
+    <p class="dialog-copy">仅在人机协同模式生效。暂停后需要确认接管，取消确认会保留暂停状态。</p>
+  </dialog>
+  <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="vendor/lucide.js"></script>
+  <script src="vendor/marked.umd.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

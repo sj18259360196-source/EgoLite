@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Ego credential fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Credential fixture</h1>
+      <form id="login-form">
+        <label for="login-username">Username</label>
+        <input id="login-username" name="username" autocomplete="username">
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password">
+        <button id="login-submit" type="submit">Sign in</button>
+      </form>
+      <output id="login-result" aria-live="polite"></output>
+    </main>
+    <script>
+      document.querySelector("#login-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        document.querySelector("#login-result").textContent = `Signed in as ${data.get("username")}`;
+      });
+    </script>
+  </body>
+</html>

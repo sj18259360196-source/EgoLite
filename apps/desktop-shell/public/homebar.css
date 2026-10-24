@@ -1,0 +1,25 @@
+:root { color-scheme: light; font-family: Inter, "Segoe UI", sans-serif; letter-spacing: 0; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
+button, input { font: inherit; letter-spacing: 0; }
+.homebar-shell { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 10px; width: 100%; height: 100%; padding: 11px 12px; border: 1px solid #cfcfcf; border-radius: 8px; background: #f8f8f8; box-shadow: 0 14px 34px rgba(0, 0, 0, .2); }
+.homebar-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; color: #fff; background: #171717; font: 700 20px/1 Georgia, serif; }
+.homebar-input-wrap { min-width: 0; }
+#homebar-input { width: 100%; height: 31px; padding: 0; border: 0; outline: 0; color: #151515; background: transparent; font-size: 17px; }
+#homebar-input::placeholder { color: #8a8a8a; }
+.homebar-footer { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; margin-top: 3px; }
+.homebar-modes { display: flex; align-items: center; gap: 2px; }
+.homebar-modes button { height: 22px; padding: 0 8px; border: 0; border-radius: 5px; color: #707070; background: transparent; font-size: 10px; cursor: pointer; }
+.homebar-modes button:hover { color: #222; background: #ececec; }
+.homebar-modes button.active { color: #fff; background: #282828; }
+.homebar-contexts { display: flex; align-items: center; gap: 2px; padding-left: 7px; border-left: 1px solid #ddd; }
+.homebar-contexts button { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 5px; color: #8a8a8a; background: transparent; cursor: pointer; }
+.homebar-contexts button:hover { color: #222; background: #ececec; }
+.homebar-contexts button.active { color: #fff; background: #3b6e5c; }
+.homebar-contexts button:disabled { color: #c7c7c7; background: transparent; cursor: default; }
+.homebar-contexts svg { width: 12px; height: 12px; }
+.homebar-hint { min-width: 0; overflow: hidden; color: #939393; font-size: 9px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.homebar-submit { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 7px; color: #fff; background: #171717; cursor: pointer; }
+.homebar-submit:hover { background: #333; }
+.homebar-submit:disabled { color: #aaa; background: #e5e5e5; cursor: default; }
+.homebar-submit svg { width: 15px; height: 15px; }

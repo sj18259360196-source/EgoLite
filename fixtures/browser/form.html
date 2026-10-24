@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Ego Windows compatibility fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Task fixture</h1>
+      <form id="task-form">
+        <label for="task-name">Task name</label>
+        <input id="task-name" name="taskName" autocomplete="off">
+        <button type="submit">Create task</button>
+      </form>
+      <output id="result" aria-live="polite"></output>
+      <button id="hidden-button" hidden>Hidden action</button>
+      <label for="upload">Upload file</label>
+      <input id="upload" type="file">
+      <output id="upload-result" aria-live="polite"></output>
+      <a id="download" href="/download">Download file</a>
+      <button id="dialog" type="button">Open dialog</button>
+      <button id="hover" type="button">Hover target</button>
+      <output id="hover-result" aria-live="polite"></output>
+      <button id="double" type="button">Double click target</button>
+      <output id="double-result" aria-live="polite"></output>
+      <button id="context" type="button">Context menu target</button>
+      <output id="context-result" aria-live="polite"></output>
+      <button id="drag-source" type="button" draggable="true">Drag source</button>
+      <button id="drop-target" type="button">Drop target</button>
+      <output id="drag-result" aria-live="polite"></output>
+      <button id="hide-trigger" type="button">Hide dynamic target</button>
+      <button id="dynamic-target" type="button">Dynamic target</button>
+      <button id="popup" type="button">Open popup</button>
+      <button id="api-request" type="button">Load API result</button>
+      <output id="api-result" aria-live="polite"></output>
+      <div id="frame-slot"></div>
+      <div style="height: 1600px" aria-hidden="true"></div>
+      <button id="below-fold">Below fold</button>
+    </main>
+    <script>
+      const webMcpTools = [{
+        name: "create_task",
+        description: "Create a task through the page's WebMCP API",
+        inputSchema: {
+          type: "object",
+          properties: { name: { type: "string" } },
+          required: ["name"],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: false },
+      }];
+      Object.defineProperty(document, "modelContext", {
+        configurable: true,
+        value: {
+          async getTools() {
+            return webMcpTools;
+          },
+          async executeTool(tool, input) {
+            if (tool?.name !== "create_task") throw new Error(`Unknown WebMCP tool: ${tool?.name}`);
+            const taskName = String(input?.name || "").trim();
+            if (!taskName) throw new Error("Task name is required");
+            const message = `Created via WebMCP: ${taskName}`;
+            document.querySelector("#result").textContent = message;
+            return JSON.stringify({ content: [{ type: "text", text: message }] });
+          },
+        },
+      });
+      document.querySelector("#task-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        document.querySelector("#result").textContent =
+          `Created: ${new FormData(event.currentTarget).get("taskName")}`;
+      });
+      document.querySelector("#upload").addEventListener("change", (event) => {
+        document.querySelector("#upload-result").textContent =
+          event.currentTarget.files?.[0]?.name || "";
+      });
+      document.querySelector("#dialog").addEventListener("click", () => alert("Ego dialog"));
+      document.querySelector("#hover").addEventListener("mouseenter", () => {
+        document.querySelector("#hover-result").textContent = "Hovered by Ego";
+      });
+      let doubleClicks = 0;
+      document.querySelector("#double").addEventListener("click", () => { doubleClicks += 1; });
+      document.querySelector("#double").addEventListener("dblclick", () => {
+        document.querySelector("#double-result").textContent = `Double clicked by Ego (${doubleClicks} clicks)`;
+      });
+      document.querySelector("#context").addEventListener("click", () => {
+        document.querySelector("#context-result").textContent = "Unexpected left click";
+      });
+      document.querySelector("#context").addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        document.querySelector("#context-result").textContent = "Context opened by Ego";
+      });
+      document.querySelector("#drag-source").addEventListener("dragstart", (event) => {
+        event.dataTransfer?.setData("text/plain", "ego-drag");
+      });
+      document.querySelector("#drop-target").addEventListener("dragover", (event) => event.preventDefault());
+      document.querySelector("#drop-target").addEventListener("drop", (event) => {
+        event.preventDefault();
+        document.querySelector("#drag-result").textContent =
+          event.dataTransfer?.getData("text/plain") === "ego-drag" ? "Dropped by Ego" : "Drop missing data";
+      });
+      document.querySelector("#hide-trigger").addEventListener("click", () => {
+        const target = document.querySelector("#dynamic-target");
+        setTimeout(() => { target.style.display = "none"; }, 100);
+        setTimeout(() => { target.remove(); }, 1500);
+      });
+      document.querySelector("#popup").addEventListener("click", () =>
+        window.open("/popup", "ego-popup", "width=480,height=320"));
+      document.querySelector("#api-request").addEventListener("click", async () => {
+        const response = await fetch("/api/action?source=click", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "fixture-click" }),
+        });
+        const payload = await response.json();
+        document.querySelector("#api-result").textContent = payload.message;
+      });
+    </script>
+  </body>
+</html>

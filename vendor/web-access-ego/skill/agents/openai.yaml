@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ego 联网访问"
+  short_description: "统一路由静态联网、EgoLite 浏览器与 ScanSci 学术任务"
+  default_prompt: "使用 $web-access-ego 选择合适通道完成并核实这个联网任务。"

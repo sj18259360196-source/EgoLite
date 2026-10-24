@@ -1,0 +1,2474 @@
+{
+  "contractVersion": 1,
+  "capability": "scoped-refs-v1",
+  "desktop": {
+    "scopedEnabled": {
+      "contractVersion": 1,
+      "refFormat": "scoped-v1",
+      "scopedRefsEnabled": true,
+      "snapshotRefs": "partial-merge-complete-page-replace",
+      "frameRefs": "same-process-oopif-nested",
+      "locatorScope": "main-frame",
+      "scopedDrag": "two-refs-same-frame-document-session",
+      "scopedElementScreenshot": "root-native-session-only",
+      "scopedNetworkWait": "sessions-present-at-wait-start",
+      "rawCdpScopedGuarantees": false,
+      "referenceActionMaxLifetimeMs": 300000
+    },
+    "scopedDisabled": {
+      "contractVersion": 1,
+      "refFormat": "native-v0",
+      "scopedRefsEnabled": false,
+      "snapshotRefs": "legacy-native-ids",
+      "frameRefs": "legacy",
+      "locatorScope": "main-frame",
+      "scopedDrag": "unavailable",
+      "scopedElementScreenshot": "unavailable",
+      "scopedNetworkWait": "unavailable",
+      "rawCdpScopedGuarantees": false
+    }
+  },
+  "notes": {
+    "surfaces": "The full ego_* MCP and SDK operate on the selected task's tab. The ego_desktop_* MCP operates on the visible desktop page. A tool appearing in tools/list does not grant control or prove that the connected backend supports every operation.",
+    "refs": "When scoped-refs-v1 is negotiated, @refs identify a runtime, task, page, frame and document. Partial snapshots merge references; complete-page snapshots replace that page's reference set. Navigation, frame removal, reconnect or a page change can invalidate refs. Never reinterpret a public ref as a native backendNodeId. Without negotiation, refs use the legacy native-v0 behavior.",
+    "frames": "On the desktop scoped backend, use snapshot @refs for same-process, cross-process and nested iframe elements. Ordinary CSS/role locators remain rooted in the main frame. Child-frame stable locators are omitted. browser.iframeTarget() is not supported for desktop iframe discovery because Target.getTargets exposes top-level pages only.",
+    "drag": "Scoped drag supports exactly two refs in the same page, frame, document and native session. Cross-frame drag, mixed ref/coordinate endpoints and multi-point paths containing scoped refs are rejected.",
+    "screenshot": "The MCP screenshot tools capture a page, not a target ref. SDK scoped locator screenshots support the root native session and same-process frames sharing it. OOPIF element screenshots are unavailable; use a page screenshot.",
+    "network": "Scoped network waits observe the live sessions of the selected page at wait start. They do not promise to capture initial requests from frames created later. Response bodies use the original source session. Register the wait before triggering the request.",
+    "control": "Task spaces have separate tabs and control leases. Login state belongs to the selected browser Profile; spaces using that Profile can share its login state. This does not import another browser's cookies. Read-only observation grants no write access. After handoff, request and obtain control through the existing policy before writing.",
+    "errors": "EGO_REFERENCE_STALE requires a fresh snapshot. EGO_FRAME_UNAVAILABLE requires re-observation after the frame becomes ready. EGO_ACTION_RESULT_UNKNOWN means input may have reached the page; inspect the result and do not automatically replay it. Raw CDP remains authorized but does not gain scoped-ref identity guarantees.",
+    "continuous": "Keep composed SDK workflows for deterministic work. Use ego_run with explicit steps, mode repair and independent success checks when locator recovery is needed. targetHint enables local exact-label recovery, then at most one Jev target-selection decision if its non-ref locator is absent before dispatch. Intact steps use no Jev. Repair never retries an action error or invents steps; direct disables model fallback, auto retains goal-only exploration. Semantic decisions need the selected Profile's TypeSafe key and cloud consent. Use ego_extract for main-frame rows and pagination. If its connected schema supports relevance, use named extracted fields for bounded semantic screening of noisy lists; unknown rows survive. Check both complete and relevance.complete, plus unknownRows; relevance is not factual verification. Do not use a second writer during a run. Cancel with ego_automation_cancel. A done status requires verified evidence; inspect handoffs, partial extraction and unknown outcomes. Supply authorizedActions only for explicitly authorized consequential actions. These tools do not add backend capabilities."
+  },
+  "sdkSnapshotDefaults": {
+    "scope": "full_page",
+    "includeActionMarks": true,
+    "includeStableLocator": true
+  },
+  "mcp": {
+    "full": [
+      {
+        "name": "ego_agent_status",
+        "description": "Read Agent connection and browser activity known to Ego. External Codex Desktop conversations are unavailable without a status provider.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "clientId": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "sourceScope": {
+              "default": "ego",
+              "type": "string",
+              "enum": [
+                "ego",
+                "codex-desktop"
+              ]
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_automation_cancel",
+        "description": "Cancel this MCP session's continuous task. Already dispatched operations may have happened; observe their results before retrying.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_browser_fetch",
+        "description": "Run fetch inside the current page origin so browser cookies, CORS, and session state apply.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "method": {
+              "default": "GET",
+              "type": "string",
+              "minLength": 1
+            },
+            "headers": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "body": {
+              "type": "string"
+            },
+            "credentials": {
+              "default": "same-origin",
+              "type": "string",
+              "enum": [
+                "omit",
+                "same-origin",
+                "include"
+              ]
+            },
+            "timeout": {
+              "default": 20,
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 120
+            },
+            "parse": {
+              "default": "auto",
+              "type": "string",
+              "enum": [
+                "auto",
+                "json",
+                "text"
+              ]
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_check",
+        "description": "Set a checkbox or radio element to the requested checked state.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checked": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_click",
+        "description": "Click one element using an @ref from the latest snapshot or a strict locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "button": {
+              "default": "left",
+              "type": "string",
+              "enum": [
+                "left",
+                "right",
+                "middle"
+              ]
+            },
+            "clickCount": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_click_new_tab",
+        "description": "Click an element, wait for a newly opened tab or popup, and optionally select it.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "timeout": {
+              "default": 20000,
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000
+            },
+            "select": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_click_wait_for_response",
+        "description": "Atomically start waiting for a matching network response, click an element, and return response details. Scoped network waits observe the live sessions of the selected page at wait start. They do not promise to capture initial requests from frames created later. Response bodies use the original source session. Register the wait before triggering the request.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "match": {
+              "default": "contains",
+              "type": "string",
+              "enum": [
+                "exact",
+                "contains",
+                "regex"
+              ]
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            "timeout": {
+              "default": 20000,
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 120000
+            },
+            "bodyLimit": {
+              "default": 100000,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "required": [
+            "target",
+            "url"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_dialog_respond",
+        "description": "Accept or dismiss the currently open JavaScript dialog, with optional prompt text.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "accept": {
+              "default": true,
+              "type": "boolean"
+            },
+            "promptText": {
+              "type": "string"
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_dialog_status",
+        "description": "Inspect the currently open JavaScript alert, confirm, prompt, or before-unload dialog.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_double_click",
+        "description": "Double-click one element using an @ref from the latest snapshot or a strict locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_download",
+        "description": "Click a download element and wait for the file to complete, optionally saving it to a local path.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "saveAs": {
+              "type": "string",
+              "minLength": 1
+            },
+            "timeout": {
+              "default": 30000,
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_drag",
+        "description": "Drag one element to another element using current snapshot @refs or strict locators. Scoped drag supports exactly two refs in the same page, frame, document and native session. Cross-frame drag, mixed ref/coordinate endpoints and multi-point paths containing scoped refs are rejected.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "delay": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2000
+            }
+          },
+          "required": [
+            "source",
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_evaluate",
+        "description": "Evaluate a JavaScript expression in the current page and return its JSON-serializable value.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100000
+            }
+          },
+          "required": [
+            "expression"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_extract",
+        "description": "Read table/list rows with optional pagination. Pass task to select an existing task by name/ID in this MCP session; SDK selection is separate. maxPages is 1-30, maxRows is 1-5000. Fields use CSS selectors relative to each row. Optional relevance sends only its named extracted fields to Jev in bounded batches with the selected Profile's cloud consent. It excludes confidently irrelevant rows, always retains unknown rows, and returns original rowIndices, per-row judgments and sourceIndex provenance. complete covers collection; also inspect relevance.complete and unknownRows. Model relevance is not factual verification. Without relevance, no model is used. Keep composed SDK workflows for deterministic work. Use ego_run with explicit steps, mode repair and independent success checks when locator recovery is needed. targetHint enables local exact-label recovery, then at most one Jev target-selection decision if its non-ref locator is absent before dispatch. Intact steps use no Jev. Repair never retries an action error or invents steps; direct disables model fallback, auto retains goal-only exploration. Semantic decisions need the selected Profile's TypeSafe key and cloud consent. Use ego_extract for main-frame rows and pagination. If its connected schema supports relevance, use named extracted fields for bounded semantic screening of noisy lists; unknown rows survive. Check both complete and relevance.complete, plus unknownRows; relevance is not factual verification. Do not use a second writer during a run. Cancel with ego_automation_cancel. A done status requires verified evidence; inspect handoffs, partial extraction and unknown outcomes. Supply authorizedActions only for explicitly authorized consequential actions. These tools do not add backend capabilities.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              ]
+            },
+            "selector": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "selector": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "attribute": {
+                    "default": "text",
+                    "type": "string",
+                    "enum": [
+                      "text",
+                      "href",
+                      "src",
+                      "value",
+                      "datetime",
+                      "title"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "maxRows": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            },
+            "next": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "maxPages": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "timeoutMs": {
+              "default": 45000,
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000
+            },
+            "relevance": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                "fields": {
+                  "minItems": 1,
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "batchSize": {
+                  "default": 20,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 40
+                },
+                "maxCandidates": {
+                  "default": 200,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "maxDecisions": {
+                  "default": 10,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "maxTextChars": {
+                  "default": 1000,
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 2000
+                }
+              },
+              "required": [
+                "query",
+                "fields"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "selector",
+            "fields"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_fill",
+        "description": "Replace the value of an editable element identified by @ref or locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target",
+            "value"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_hover",
+        "description": "Hover an element using an @ref from the latest snapshot or a strict locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_inspect",
+        "description": "Read text, value, state, and selected attributes from one element identified by @ref or locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attributes": {
+              "default": [],
+              "maxItems": 32,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_navigate",
+        "description": "Navigate the current tab backward, forward, or reload it and optionally wait for loading.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "back",
+                "forward",
+                "reload"
+              ]
+            },
+            "waitUntil": {
+              "default": "load",
+              "type": "string",
+              "enum": [
+                "load",
+                "domcontentloaded",
+                "commit"
+              ]
+            },
+            "ignoreCache": {
+              "default": false,
+              "type": "boolean"
+            },
+            "timeout": {
+              "default": 20000,
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_open",
+        "description": "Open or reuse a tab at a URL in the selected Ego task space and wait for loading.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "wait": {
+              "default": true,
+              "type": "boolean"
+            },
+            "match": {
+              "default": "exact",
+              "type": "string",
+              "enum": [
+                "exact",
+                "origin",
+                "origin+path",
+                "includes"
+              ]
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_package_status",
+        "description": "Read CoS runtime, queued-task metadata and recent session summaries. Does not imply that a task has completed.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "packageId": {
+              "default": "cos",
+              "type": "string",
+              "const": "cos"
+            },
+            "instanceId": {
+              "type": "string",
+              "const": "default"
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_package_wait",
+        "description": "Wait up to 25 seconds for CoS metadata events. Reuse its cursor; a timeout does not mean task completion.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "instanceId": {
+              "type": "string",
+              "const": "default"
+            },
+            "afterCursor": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "timeoutMs": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 25000
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_page_info",
+        "description": "Read the current page URL, title, viewport, scroll position, and document dimensions.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_press",
+        "description": "Press a key on a target element, or on the page when target is omitted.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_run",
+        "description": "Complete a bounded browser subtask. Pass task to select an existing task by name/ID; SDK selection is separate. Keep an existing composed SDK workflow for deterministic work. For explicit plans needing locator recovery, use mode repair and targetHint: intact targets or exact unique labels run locally; an absent non-ref target may receive one Jev target-selection decision before dispatch. Repair never retries failed actions or adds unplanned actions. Use direct for no model fallback, auto only for deliberate goal-only exploration. Requires structural success checks. Only include authorizedActions explicitly authorized by the user. Returns verified evidence or a handoff; never replay unknown results. Keep composed SDK workflows for deterministic work. Use ego_run with explicit steps, mode repair and independent success checks when locator recovery is needed. targetHint enables local exact-label recovery, then at most one Jev target-selection decision if its non-ref locator is absent before dispatch. Intact steps use no Jev. Repair never retries an action error or invents steps; direct disables model fallback, auto retains goal-only exploration. Semantic decisions need the selected Profile's TypeSafe key and cloud consent. Use ego_extract for main-frame rows and pagination. If its connected schema supports relevance, use named extracted fields for bounded semantic screening of noisy lists; unknown rows survive. Check both complete and relevance.complete, plus unknownRows; relevance is not factual verification. Do not use a second writer during a run. Cancel with ego_automation_cancel. A done status requires verified evidence; inspect handoffs, partial extraction and unknown outcomes. Supply authorizedActions only for explicitly authorized consequential actions. These tools do not add backend capabilities. Task spaces have separate tabs and control leases. Login state belongs to the selected browser Profile; spaces using that Profile can share its login state. This does not import another browser's cookies. Read-only observation grants no write access. After handoff, request and obtain control through the existing policy before writing. On the desktop scoped backend, use snapshot @refs for same-process, cross-process and nested iframe elements. Ordinary CSS/role locators remain rooted in the main frame. Child-frame stable locators are omitted. browser.iframeTarget() is not supported for desktop iframe discovery because Target.getTargets exposes top-level pages only.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              ]
+            },
+            "goal": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "values": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 20000
+              }
+            },
+            "steps": {
+              "default": [],
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "click",
+                      "fill",
+                      "select",
+                      "check",
+                      "uncheck",
+                      "press",
+                      "hover",
+                      "scroll",
+                      "navigate",
+                      "wait",
+                      "upload"
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "targetHint": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "valueKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "value": {
+                    "type": "string",
+                    "maxLength": 20000
+                  },
+                  "deltaY": {
+                    "type": "number",
+                    "minimum": -10000,
+                    "maximum": 10000
+                  },
+                  "waitFor": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "url_contains",
+                          "url_path_contains",
+                          "title_contains",
+                          "visible",
+                          "hidden",
+                          "text_contains",
+                          "value_equals",
+                          "checked",
+                          "count_equals",
+                          "filter_value"
+                        ]
+                      },
+                      "target": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2000
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 20000
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "consequential": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "success": {
+              "type": "object",
+              "properties": {
+                "all": {
+                  "minItems": 1,
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "url_contains",
+                          "url_path_contains",
+                          "title_contains",
+                          "visible",
+                          "hidden",
+                          "text_contains",
+                          "value_equals",
+                          "checked",
+                          "count_equals",
+                          "filter_value"
+                        ]
+                      },
+                      "target": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2000
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 20000
+                          },
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "all"
+              ],
+              "additionalProperties": false
+            },
+            "allowedOrigins": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "authorizedActions": {
+              "default": [],
+              "maxItems": 5,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "submit",
+                  "delete",
+                  "purchase",
+                  "send",
+                  "upload"
+                ]
+              }
+            },
+            "mode": {
+              "default": "auto",
+              "type": "string",
+              "enum": [
+                "auto",
+                "direct",
+                "repair"
+              ]
+            },
+            "budget": {
+              "default": {
+                "maxActions": 24,
+                "maxDecisions": 18,
+                "timeoutMs": 45000
+              },
+              "type": "object",
+              "properties": {
+                "maxActions": {
+                  "default": 24,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "maxDecisions": {
+                  "default": 18,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "timeoutMs": {
+                  "default": 45000,
+                  "type": "integer",
+                  "minimum": 1000,
+                  "maximum": 120000
+                }
+              }
+            }
+          },
+          "required": [
+            "goal",
+            "success"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_screenshot",
+        "description": "Capture the current page and return a PNG for visual inspection. The MCP screenshot tools capture a page, not a target ref. SDK scoped locator screenshots support the root native session and same-process frames sharing it. OOPIF element screenshots are unavailable; use a page screenshot.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "fullPage": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_scroll",
+        "description": "Scroll the page by CSS-pixel deltas, or reveal a target element.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "deltaX": {
+              "default": 0,
+              "type": "number"
+            },
+            "deltaY": {
+              "default": 500,
+              "type": "number"
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_select",
+        "description": "Select one or more values in a select element identified by @ref or locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "values": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "target",
+            "values"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_snapshot",
+        "description": "Return an accessibility-first page snapshot with actionable @refs for later actions. When scoped-refs-v1 is negotiated, @refs identify a runtime, task, page, frame and document. Partial snapshots merge references; complete-page snapshots replace that page's reference set. Navigation, frame removal, reconnect or a page change can invalidate refs. Never reinterpret a public ref as a native backendNodeId. Without negotiation, refs use the legacy native-v0 behavior. On the desktop scoped backend, use snapshot @refs for same-process, cross-process and nested iframe elements. Ordinary CSS/role locators remain rooted in the main frame. Child-frame stable locators are omitted. browser.iframeTarget() is not supported for desktop iframe discovery because Target.getTargets exposes top-level pages only.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "default": "viewport",
+              "type": "string",
+              "enum": [
+                "viewport",
+                "full_page"
+              ]
+            },
+            "stableLocators": {
+              "default": true,
+              "type": "boolean"
+            },
+            "maxResultLength": {
+              "type": "integer",
+              "minimum": 64,
+              "maximum": 9007199254740991
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_status",
+        "description": "Inspect Ego backend readiness, task spaces, and the selected task's tabs before browser work. The full ego_* MCP and SDK operate on the selected task's tab. The ego_desktop_* MCP operates on the visible desktop page. A tool appearing in tools/list does not grant control or prove that the connected backend supports every operation. Task spaces have separate tabs and control leases. Login state belongs to the selected browser Profile; spaces using that Profile can share its login state. This does not import another browser's cookies. Read-only observation grants no write access. After handoff, request and obtain control through the existing policy before writing.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_tab_close",
+        "description": "Close a tab in the selected task by current target id, title, or URL.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_tab_select",
+        "description": "Switch the selected task to a tab by current target id, title, or URL.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_tabs",
+        "description": "List tabs in the selected Ego task space.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_close",
+        "description": "Close a browser task and all of its tabs after verified work is complete.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "description": "Task-space name or numeric id"
+            }
+          },
+          "required": [
+            "task"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_complete",
+        "description": "Complete a browser task and either keep it for the user or close it after verified work.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "description": "Task-space name or numeric id"
+            },
+            "keep": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "task"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_handoff",
+        "description": "Hand the selected browser task to the user and stop agent browser mutations.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_observe",
+        "description": "Read workspace control state and tabs without selecting it or obtaining write access. Optionally capture a read-only snapshot of a tab in that workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "targetId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "task"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_request_control",
+        "description": "Request write access; the user or current writer must explicitly approve the handoff.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          },
+          "required": [
+            "task"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_return_control",
+        "description": "Release this Agent's write access to the user or approve a pending request from another Agent.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "requestId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "task"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_task_use",
+        "description": "Select an existing Ego task space by name/id or create it when missing.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "description": "Task-space name or numeric id"
+            }
+          },
+          "required": [
+            "task"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_type",
+        "description": "Type text sequentially into an editable element, preserving keyboard events.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string"
+            },
+            "delay": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            }
+          },
+          "required": [
+            "target",
+            "text"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_upload",
+        "description": "Set one or more existing local files on a file input identified by @ref or locator.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "paths": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "target",
+            "paths"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_wait",
+        "description": "Wait for page loading or for a short bounded duration after an action.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "loadState": {
+              "type": "string",
+              "enum": [
+                "load",
+                "domcontentloaded",
+                "networkidle"
+              ]
+            },
+            "milliseconds": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_wait_for",
+        "description": "Wait until a URL, element state, or text condition is satisfied without relying on a fixed sleep.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "attached",
+                "visible",
+                "hidden",
+                "detached"
+              ]
+            },
+            "timeout": {
+              "default": 20000,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120000
+            },
+            "polling": {
+              "default": 100,
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 2000
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_webmcp_call",
+        "description": "Call one WebMCP tool exposed by the current page. Discover tools first with ego_webmcp_tools.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "Exact WebMCP tool name returned by ego_webmcp_tools"
+            },
+            "input": {
+              "default": {},
+              "description": "JSON object matching the site's tool input schema",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "tool"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_webmcp_tools",
+        "description": "List the WebMCP tools exposed by the current page through document.modelContext.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      }
+    ],
+    "direct": [
+      {
+        "name": "ego_agent_status",
+        "description": "Read Agent connection and browser activity known to Ego. External Codex Desktop conversations are unavailable without a status provider.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "clientId": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "sourceScope": {
+              "default": "ego",
+              "type": "string",
+              "enum": [
+                "ego",
+                "codex-desktop"
+              ]
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_click",
+        "description": "Click an element in the visible Ego page using an @ref from the latest snapshot.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "pattern": "^@\\d+$"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_close_tab",
+        "description": "Close a visible Ego tab by target id, or close the active tab when omitted.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "targetId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_evaluate",
+        "description": "Evaluate a JSON-serializable JavaScript expression in the visible Ego page.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100000
+            }
+          },
+          "required": [
+            "expression"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_fill",
+        "description": "Fill an editable element in the visible Ego page using an @ref from the latest snapshot.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "pattern": "^@\\d+$"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target",
+            "value"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_hover",
+        "description": "Hover an element in the visible Ego page using an @ref from the latest snapshot.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "pattern": "^@\\d+$"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_navigate",
+        "description": "Navigate the visible Ego page backward, forward, or reload.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "back",
+                "forward",
+                "reload"
+              ]
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_new_tab",
+        "description": "Create and activate a new tab in the visible Ego task space.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_open",
+        "description": "Navigate the visible Ego desktop page to a URL or search query.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_page_info",
+        "description": "Read title, URL, loading state, and navigation availability from the visible Ego page.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_press",
+        "description": "Send a key or keyboard shortcut to the visible Ego page.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_request_control",
+        "description": "Request write access to the visible workspace. The user must approve this Agent in the desktop control panel before page operations can proceed.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_screenshot",
+        "description": "Capture the visible Ego page as a PNG. The MCP screenshot tools capture a page, not a target ref. SDK scoped locator screenshots support the root native session and same-process frames sharing it. OOPIF element screenshots are unavailable; use a page screenshot.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_scroll",
+        "description": "Scroll the visible Ego page by pixel deltas.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "deltaY": {
+              "type": "number",
+              "minimum": -100000,
+              "maximum": 100000
+            },
+            "deltaX": {
+              "default": 0,
+              "type": "number",
+              "minimum": -100000,
+              "maximum": 100000
+            }
+          },
+          "required": [
+            "deltaY"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_snapshot",
+        "description": "Capture an accessibility snapshot of the visible Ego page and create actionable @refs. When scoped-refs-v1 is negotiated, @refs identify a runtime, task, page, frame and document. Partial snapshots merge references; complete-page snapshots replace that page's reference set. Navigation, frame removal, reconnect or a page change can invalidate refs. Never reinterpret a public ref as a native backendNodeId. Without negotiation, refs use the legacy native-v0 behavior. On the desktop scoped backend, use snapshot @refs for same-process, cross-process and nested iframe elements. Ordinary CSS/role locators remain rooted in the main frame. Child-frame stable locators are omitted. browser.iframeTarget() is not supported for desktop iframe discovery because Target.getTargets exposes top-level pages only.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "default": "full_page",
+              "type": "string",
+              "enum": [
+                "viewport",
+                "full_page"
+              ]
+            },
+            "stableLocators": {
+              "default": false,
+              "type": "boolean"
+            },
+            "actionMarks": {
+              "default": true,
+              "type": "boolean"
+            },
+            "maxResultLength": {
+              "type": "integer",
+              "minimum": 64,
+              "maximum": 9007199254740991
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_status",
+        "description": "Check whether the visible Ego desktop browser is available. The full ego_* MCP and SDK operate on the selected task's tab. The ego_desktop_* MCP operates on the visible desktop page. A tool appearing in tools/list does not grant control or prove that the connected backend supports every operation. Task spaces have separate tabs and control leases. Login state belongs to the selected browser Profile; spaces using that Profile can share its login state. This does not import another browser's cookies. Read-only observation grants no write access. After handoff, request and obtain control through the existing policy before writing.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_switch_tab",
+        "description": "Activate a visible Ego tab by target id.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "targetId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "targetId"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_tabs",
+        "description": "List tabs in the currently visible Ego task space.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_type",
+        "description": "Type text into the currently focused element in the visible Ego page.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "maxLength": 100000
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_desktop_wait",
+        "description": "Wait until the visible page finishes loading or matches URL and text conditions.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "timeout": {
+              "default": 10000,
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 60000
+            },
+            "loadComplete": {
+              "default": true,
+              "type": "boolean"
+            },
+            "urlContains": {
+              "type": "string",
+              "maxLength": 10000
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 100000
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_package_status",
+        "description": "Read CoS runtime, queued-task metadata and recent session summaries. Does not imply that a task has completed.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "packageId": {
+              "default": "cos",
+              "type": "string",
+              "const": "cos"
+            },
+            "instanceId": {
+              "type": "string",
+              "const": "default"
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ego_package_wait",
+        "description": "Wait up to 25 seconds for CoS metadata events. Reuse its cursor; a timeout does not mean task completion.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "instanceId": {
+              "type": "string",
+              "const": "default"
+            },
+            "afterCursor": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "timeoutMs": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 25000
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      }
+    ]
+  },
+  "sdk": {
+    "page": [
+      "dialogInfo",
+      "drainEvents",
+      "elementCenter",
+      "evaluate",
+      "getByAltText",
+      "getByLabel",
+      "getByPlaceholder",
+      "getByRole",
+      "getByTestId",
+      "getByText",
+      "getByTitle",
+      "goBack",
+      "goForward",
+      "goto",
+      "handleDialog",
+      "info",
+      "locator",
+      "reload",
+      "screenshot",
+      "setDefaultTimeout",
+      "snapshot",
+      "snapshotRaw",
+      "title",
+      "url",
+      "waitForEvent",
+      "waitForFunction",
+      "waitForLoadState",
+      "waitForRequest",
+      "waitForResponse",
+      "waitForSelector",
+      "waitForTimeout",
+      "waitForURL"
+    ],
+    "browser": [
+      "closeTab",
+      "currentTab",
+      "ensureRealTab",
+      "iframeTarget",
+      "listTabs",
+      "openOrReuseTab",
+      "switchTab"
+    ],
+    "taskSpaces": [
+      "claim",
+      "complete",
+      "handOff",
+      "list",
+      "new",
+      "observe",
+      "requestControl",
+      "returnControl",
+      "switch",
+      "takeOver",
+      "useOrCreate",
+      "waitForAgentControl"
+    ],
+    "site": [
+      "learnContext",
+      "runBrowserTool",
+      "runTool",
+      "skills",
+      "skillsForUrl"
+    ],
+    "fetch": [
+      "browser",
+      "server"
+    ],
+    "page.keyboard": [
+      "down",
+      "insertText",
+      "press",
+      "type",
+      "up"
+    ],
+    "page.mouse": [
+      "click",
+      "dblclick",
+      "down",
+      "drag",
+      "move",
+      "up",
+      "wheel"
+    ],
+    "locator": [
+      "allInnerTexts",
+      "allTextContents",
+      "blur",
+      "boundingBox",
+      "check",
+      "clear",
+      "click",
+      "count",
+      "dblclick",
+      "dispatchEvent",
+      "dragTo",
+      "evaluate",
+      "evaluateAll",
+      "fill",
+      "filter",
+      "first",
+      "focus",
+      "getAttribute",
+      "getByAltText",
+      "getByLabel",
+      "getByPlaceholder",
+      "getByRole",
+      "getByTestId",
+      "getByText",
+      "getByTitle",
+      "hover",
+      "innerHTML",
+      "innerText",
+      "inputValue",
+      "isChecked",
+      "isDisabled",
+      "isEditable",
+      "isEnabled",
+      "isHidden",
+      "isVisible",
+      "last",
+      "locator",
+      "nth",
+      "press",
+      "pressSequentially",
+      "screenshot",
+      "scrollIntoViewIfNeeded",
+      "selectOption",
+      "setChecked",
+      "setInputFiles",
+      "textContent",
+      "uncheck",
+      "waitFor"
+    ]
+  }
+}

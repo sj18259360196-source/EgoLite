@@ -1,0 +1,23 @@
+name: Source checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - name: CoS and browser controller tests
+        run: node --test --test-concurrency=1 "apps/desktop-shell/workspace-packs/*.test.mjs" apps/desktop-shell/desktop-browser-controller.test.mjs

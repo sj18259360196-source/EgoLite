@@ -1,0 +1,18 @@
+{
+  "name": "@ego-compat/broker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ego-compat/broker-core": "0.0.1",
+    "@ego-compat/companion-backend": "0.0.1",
+    "@ego-compat/electron-desktop-backend": "0.1.0",
+    "@ego-compat/managed-edge": "0.0.1",
+    "@ego-compat/protocol": "0.0.1",
+    "@ego-compat/runtime-adapter": "0.0.1"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@ego-compat/managed-edge",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ego-compat/broker-core": "0.0.1",
+    "@ego-compat/protocol": "0.0.1"
+  }
+}

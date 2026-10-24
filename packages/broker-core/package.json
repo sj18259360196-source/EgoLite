@@ -1,0 +1,13 @@
+{
+  "name": "@ego-compat/broker-core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ego-compat/protocol": "0.0.1"
+  }
+}

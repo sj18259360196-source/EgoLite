@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ego Companion</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header><strong>Ego Companion</strong><span id="status">连接中</span></header>
+  <main>
+    <p id="tab-title"></p>
+    <label for="space">Task space</label>
+    <select id="space"></select>
+    <button id="adopt" type="button">授权当前标签</button>
+    <button id="take-control" class="secondary" type="button">接管所选任务</button>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

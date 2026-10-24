@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ego 快捷栏</title>
+  <link rel="stylesheet" href="homebar.css">
+</head>
+<body>
+  <main class="homebar-shell">
+    <div class="homebar-mark" aria-hidden="true">e</div>
+    <div class="homebar-input-wrap">
+      <input id="homebar-input" autocomplete="off" placeholder="输入网址或搜索内容" aria-label="快捷栏输入框">
+      <div class="homebar-footer">
+        <div class="homebar-modes" role="tablist" aria-label="快捷栏模式">
+          <button type="button" data-mode="browse" role="tab" class="active">浏览</button>
+        </div>
+        <div class="homebar-contexts" aria-label="上下文" hidden>
+          <button type="button" data-context="page" class="active" title="附加当前页面" aria-pressed="true"><i data-lucide="globe-2"></i></button>
+          <button type="button" data-context="selection" title="附加选中文本" aria-pressed="false"><i data-lucide="quote"></i></button>
+          <button type="button" data-context="screenshot" title="附加页面截图" aria-pressed="false"><i data-lucide="camera"></i></button>
+        </div>
+        <span id="homebar-context-title" class="homebar-hint">Ctrl+Shift+Space</span>
+      </div>
+    </div>
+    <button id="homebar-submit" class="homebar-submit" type="button" title="发送"><i data-lucide="arrow-up"></i></button>
+  </main>
+  <script src="vendor/lucide.js"></script>
+  <script type="module" src="homebar.js"></script>
+</body>
+</html>

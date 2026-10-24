@@ -1,0 +1,63 @@
+{
+  "name": "ego-windows-compat",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "npm run check:automation && npm run typecheck && npm run validate:extension && npm run build:native && npm run test",
+    "docs:automation": "node tools/sync-automation-docs.mjs",
+    "check:automation": "node tools/sync-automation-docs.mjs --check",
+    "validate:extension": "node --check apps/companion-extension/background.js && node --check apps/companion-extension/selection.js && node --check apps/companion-extension/popup.js && node --check apps/companion-extension/sidepanel.js && node -e \"JSON.parse(require('fs').readFileSync('apps/companion-extension/manifest.json'))\"",
+    "build:native": "dotnet build apps/native-host/EgoCompat.NativeHost.csproj -c Release",
+    "install:companion": "pwsh -NoProfile -File tools/install-companion.ps1 -Browser Edge",
+    "doctor:companion": "node tools/companion-doctor.mjs",
+    "test:companion-profile": "node tools/companion-profile-smoke.mjs",
+    "test:companion-real": "node tools/companion-real-smoke.mjs",
+    "test:companion-restart": "node tools/companion-restart-smoke.mjs",
+    "test:companion-soak": "pwsh -NoProfile -File tools/companion-soak.ps1 -Cycles 10",
+    "test:sidepanel-visual": "node tools/sidepanel-visual-smoke.mjs",
+    "test:desktop": "node tools/desktop-shell-smoke.mjs",
+    "test:automation": "node tools/automation-smoke.mjs",
+    "test:devtools": "node tools/developer-tools-smoke.mjs",
+    "test:desktop-control": "node tools/desktop-control-smoke.mjs",
+    "test:desktop-backend": "node tools/desktop-shell-smoke.mjs --desktop-backend",
+    "test:credentials": "node tools/credential-store-electron-smoke.mjs",
+    "test:bookmarks": "node tools/bookmark-library-smoke.mjs",
+    "test:credential-ui": "node tools/credential-ui-smoke.mjs",
+    "test:desktop-mcp-direct": "node tools/desktop-mcp-direct-smoke.mjs",
+    "package:prepare": "node tools/prepare-desktop-package.mjs",
+    "test:package": "node tools/windows-suite-smoke.mjs",
+    "test:installer": "pwsh -NoProfile -File tools/verify-windows-installer.ps1",
+    "package:win": "npm run package:prepare && electron-builder --projectDir .tmp/codex/package-win/app --win nsis portable --x64",
+    "start:desktop": "npm run start --workspace @ego-compat/desktop-shell",
+    "start:desktop-mcp": "npm run start --workspace @ego-compat/desktop-mcp-server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "node --test --test-concurrency=1 --experimental-test-coverage \"packages/**/*.test.ts\" \"apps/**/*.test.ts\" \"apps/**/*.test.mjs\"",
+    "test:quick": "node --test --test-concurrency=1 \"packages/**/*.test.ts\" \"apps/**/*.test.ts\" \"apps/**/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.0",
+    "yazl": "3.3.1"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@openai/codex-sdk": "^0.147.0",
+    "dompurify": "^3.4.13",
+    "lucide": "^1.31.0",
+    "marked": "^18.0.9",
+    "yauzl": "3.4.0",
+    "zod": "^4.4.3"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@ego-compat/ego-browser",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ego-browser-win": "./src/main.ts"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ego-compat/broker": "0.0.1",
+    "@ego-compat/broker-core": "0.0.1",
+    "@ego-compat/managed-edge": "0.0.1",
+    "@ego-compat/protocol": "0.0.1",
+    "@ego-compat/runtime-adapter": "0.0.1"
+  }
+}

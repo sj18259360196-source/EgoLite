@@ -1,0 +1,60 @@
+.translation-panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(360px, calc(100vw - 24px));
+  padding: 18px;
+  box-sizing: border-box;
+  overflow: auto;
+  border: 1px solid var(--glass-border, #e4e4e4);
+  border-radius: 16px;
+  background: var(--surface-solid, #fff);
+  color: var(--text-primary, #202020);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+  font: 14px/1.45 "Segoe UI", "Microsoft YaHei", sans-serif;
+  letter-spacing: 0;
+}
+.translation-panel::backdrop { background: transparent; backdrop-filter: none; pointer-events: none; }
+.translation-panel header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.translation-panel h2 { flex: 1; min-width: 0; margin: 0; font-size: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.translation-panel button { font: inherit; letter-spacing: 0; }
+.translation-panel button svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.translation-panel .translation-icon { display: inline-flex; flex: 0 0 28px; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 4px; border: 0; border-radius: 4px; background: transparent; color: inherit; }
+.translation-panel .translation-icon:hover { background: var(--glass-2, #f2f2f2); }
+.translation-panel [data-close] svg { width: 21px; height: 21px; }
+.translation-panel label { display: grid; gap: 8px; min-width: 0; }
+.translation-panel .translation-target { font-size: 15px; }
+.translation-panel input:not([type=checkbox]), .translation-panel select {
+  width: 100%; min-width: 0; height: 38px; padding: 6px 10px; box-sizing: border-box;
+  border: 1px solid var(--glass-border, #d9d9d9); border-radius: 6px;
+  background: var(--glass-2, #f3f3f3); color: inherit; font: inherit;
+}
+.translation-panel .translation-target select { height: 38px; font-size: 15px; }
+.translation-panel option { background: var(--surface-solid, #fff); color: var(--text-primary, #202020); }
+.translation-panel footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 26px; }
+.translation-panel .translation-primary, .translation-panel .translation-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 36px; padding: 6px 12px; border: 1px solid transparent; border-radius: 8px;
+}
+.translation-panel .translation-primary { color: #fff; background: #292827; }
+.translation-panel .translation-primary:hover { background: #41403f; }
+.translation-panel .translation-secondary { color: inherit; background: var(--surface-solid, #fff); border-color: var(--glass-border, #e4e4e4); box-shadow: 0 1px 2px rgb(0 0 0 / 8%); }
+.translation-panel .translation-secondary:hover { background: var(--glass-2, #f3f3f3); }
+.translation-panel p { margin: 12px 0 0; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; color: var(--text-secondary, #666); }
+.translation-panel [data-more-menu] { border-top: 1px solid var(--glass-border, #e4e4e4); margin-top: 14px; padding-top: 6px; }
+.translation-panel [data-more-menu] > button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 4px; border: 0; border-radius: 4px; text-align: left; background: transparent; color: inherit; }
+.translation-panel [data-more-menu] > button:hover { background: var(--glass-2, #f3f3f3); }
+.translation-panel [data-more-menu] label { margin: 8px 4px; font-size: 12px; }
+.translation-panel form { display: grid; gap: 12px; }
+.translation-panel .translation-consent { display: flex; align-items: flex-start; font-size: 12px; line-height: 1.6; }
+.translation-panel .translation-consent input { flex: 0 0 16px; width: 16px; height: 16px; margin: 2px 0 0; }
+.translation-panel .translation-consent span { min-width: 0; overflow-wrap: anywhere; }
+.translation-panel button:disabled, .translation-panel select:disabled { opacity: .5; cursor: not-allowed; }
+.translation-panel [data-config] footer { margin-top: 4px; }
+#browser-translate[aria-expanded="true"] { background: var(--glass-3); color: var(--text-primary); }
+#browser-translate[data-translation-state="translating"] { color: #1677b8; box-shadow: inset 0 0 0 2px #1677b8; }
+#browser-translate[data-translation-state="translated"] { color: #16754a; background: #e5f4eb; }
+#browser-translate[data-translation-state="error"],
+#browser-translate[data-translation-state="stopped"] { color: #ad4722; background: #fff0e7; }
+.address-display { grid-template-columns: 15px minmax(0, 1fr) 28px; }
+.address-display #browser-translate { grid-column: 3; grid-row: 1; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; }

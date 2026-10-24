@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ego</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><strong>ego</strong><span id="connection">本地连接</span></div>
+    <button id="refresh" class="icon" type="button" title="刷新" aria-label="刷新">↻</button>
+  </header>
+  <nav class="view-tabs" aria-label="视图">
+    <button class="view-tab active" data-view="chat" type="button">聊天</button>
+    <button class="view-tab" data-view="tasks" type="button">任务</button>
+  </nav>
+
+  <main>
+    <section id="chat-view" class="view active">
+      <div id="messages" class="messages" aria-live="polite"></div>
+      <div id="context-picker" class="picker" hidden>
+        <div class="picker-head">
+          <div class="segmented" role="tablist">
+            <button class="source-tab active" data-source="tabs" type="button">标签</button>
+            <button class="source-tab" data-source="collections" type="button">收藏</button>
+          </div>
+          <button id="close-picker" class="icon small" type="button" title="关闭" aria-label="关闭">×</button>
+        </div>
+        <input id="source-search" type="search" placeholder="搜索" aria-label="搜索上下文">
+        <div id="source-list" class="source-list"></div>
+      </div>
+      <div class="composer-wrap">
+        <div id="attachments" class="attachments"></div>
+        <textarea id="prompt" rows="3" placeholder="询问当前工作内容" aria-label="消息"></textarea>
+        <div class="composer-actions">
+          <button id="add-context" class="icon command" type="button" title="添加上下文" aria-label="添加上下文">＋</button>
+          <span id="compose-status" class="status"></span>
+          <button id="copy-context" class="secondary" type="button">复制</button>
+          <button id="send" type="button">发送</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tasks-view" class="view">
+      <section id="current-tab">
+        <div class="section-label">当前标签</div>
+        <div id="tab-title" class="tab-title"></div>
+        <div class="adopt-row">
+          <select id="adopt-space" aria-label="选择任务"></select>
+          <button id="adopt" type="button">授权</button>
+        </div>
+      </section>
+      <section>
+        <div class="section-label">任务空间</div>
+        <div id="spaces" class="spaces"></div>
+        <div id="empty" class="empty" hidden>没有任务空间</div>
+      </section>
+    </section>
+  </main>
+
+  <template id="space-template">
+    <article class="space">
+      <div class="space-head"><strong class="space-name"></strong><span class="ownership"></span></div>
+      <div class="meta"></div>
+      <div class="actions">
+        <button class="take-control secondary" type="button">接管</button>
+        <button class="authorize" type="button">允许恢复</button>
+      </div>
+    </article>
+  </template>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

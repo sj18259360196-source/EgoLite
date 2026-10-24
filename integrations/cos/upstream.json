@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/totec448-spec/chat-on-steroids",
+  "commit": "8ea2c3b16c23267945dd74ea72e6c60c00876cfb",
+  "upstreamVersion": "2.1.45",
+  "adapterVersion": "0.2.0",
+  "packVersion": "2.1.45-ego.2",
+  "hostApiVersion": 1
+}

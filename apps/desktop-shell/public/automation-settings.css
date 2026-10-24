@@ -1,0 +1,15 @@
+#automation-settings form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+#automation-settings form > label { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
+#automation-settings input:not([type=checkbox]), #automation-settings select {
+  min-width: 0; width: 100%; height: 36px; box-sizing: border-box; padding: 6px 9px;
+  border: 1px solid var(--glass-border); border-radius: 6px; background: var(--glass-2);
+  color: var(--text-primary); font: inherit; letter-spacing: 0;
+}
+#automation-settings form .automation-wide { grid-column: 1 / -1; }
+#automation-settings form .automation-check { display: flex; align-items: flex-start; gap: 8px; overflow-wrap: anywhere; }
+#automation-settings .automation-check input { margin-top: 3px; flex: 0 0 auto; }
+#automation-settings .automation-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#automation-settings .automation-job { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--glass-border); }
+#automation-settings .automation-job span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+#automation-settings [data-status] { min-height: 20px; overflow-wrap: anywhere; }
+@media (max-width: 720px) { #automation-settings form { grid-template-columns: minmax(0, 1fr); } }

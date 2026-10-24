@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Ego Windows Companion",
+  "version": "0.0.1",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo9LjjpNpwmFQ0SEiKXIS8gCkuOHH8E1KjwjecOgGwKnkcL70/+2yZ+yWhjgVsUsZj7BFGC+MCqVcdbe5jImgNSp4fUv5yWgm2xLSmpfR1RkJ9A9vmd++/ugiYklue7tGHjomVADFoBLUIBelk+9JOeUedIbB0Oq9Pi29/n1+lFCg3Jvh8ZKPqn8KEsWd5mKLj6fGEgBFJdwJFng0in8xcNL346/9PrpCAwlr2sC3HzcSWByMmp808TvcpuP3vyaHxvfBDYcLuhQZTlV8DPhpUv7xqP+KnzTarkjyqaZV+5uL0m+2Z7p+7Ei0M2n6ljnmPS+uMCFrelUGS8f+4FN0pQIDAQAB",
+  "description": "Explicitly grants selected Edge or Chrome tabs to Ego task spaces.",
+  "permissions": [
+    "debugger",
+    "tabs",
+    "windows",
+    "storage",
+    "nativeMessaging",
+    "sidePanel"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["selection.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_title": "Ego Companion",
+    "default_popup": "popup.html"
+  },
+  "side_panel": { "default_path": "sidepanel.html" }
+}
