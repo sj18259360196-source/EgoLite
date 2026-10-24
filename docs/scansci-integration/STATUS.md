@@ -12,4 +12,6 @@ PDF 下载会检查可读性，失败时保留原文件。浏览器检查只读�
 
 机构账号的完整 WebVPN、CARSI、EZproxy 登录和全部出版社下载路径没有实测。Ego 的 Python 页面适配层尚未完整覆盖 Playwright 事件接口，不能将本次验证扩展为全部 SSO 和出版社页面均兼容。真实检索结果仍受上游数据源排序与元数据质量影响。
 
-安装包解包检查通过，包含完整实测运行时，共校验 8,190 个 ScanSci 文件。未覆盖本机正式安装，未实测安装向导和覆盖安装。验收记录见 [WORKLOG](WORKLOG.md)，实测结果保存在 evidence。发布结果在远端确认后追加。
+安装包解包检查通过，包含完整实测运行时，共校验 8,190 个 ScanSci 文件。未覆盖本机正式安装，未实测安装向导和覆盖安装。验收记录见 [WORKLOG](WORKLOG.md)，实测结果保存在 evidence。
+
+公开源码主分支及 GitHub Windows CI 已确认，Release v0.2.13 已发布。远端安装包大小和 SHA-256 与本地一致，校验文件同时提供。发布地址为 https://github.com/sj18259360196-source/EgoLite/releases/tag/v0.2.13 。
